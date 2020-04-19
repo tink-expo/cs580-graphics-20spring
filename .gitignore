@@ -1,0 +1,7 @@
+/*
+!.gitignore
+!2020_hw1_raytracing_my
+2020_hw1_raytracing_my/*
+!2020_hw1_raytracing_my/*.h
+!2020_hw1_raytracing_my/*.cpp
+!2020_hw1_raytracing_my/*.dat
