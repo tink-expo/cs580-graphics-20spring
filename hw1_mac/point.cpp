@@ -47,3 +47,14 @@ istream& operator >> (istream& s, Point& p)
   s >> p.Z;
   return s;
 }
+
+Vector& Point::operator-(Point& p)
+{
+  Vector* v = new Vector;
+
+  v->x() = X - p.x();
+  v->y() = Y - p.y();
+  v->z() = Z - p.z();
+
+  return *v;
+}

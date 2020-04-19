@@ -84,7 +84,6 @@ int main(int argc, char **argv)
   cin >> TheScene;
 
   cout << TheScene << "\n";
-
   /* open a window of the specified size */
   create_window();
 

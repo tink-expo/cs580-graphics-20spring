@@ -3,9 +3,9 @@
 //#include <iostream.h>
 #include <iostream>
 
-#ifndef _POINT
-#include "point.h"
-#endif
+// #ifndef _POINT
+// #include "point.h"
+// #endif
 
 using namespace std;
 
@@ -20,8 +20,8 @@ public:
 	Vector(const Vector&);	  		//initialisation from another
 	Vector& operator=(const Vector&); 	//assignment
 	
-	friend Vector& operator-(Point&, Point&);//Vector = Point-Point
-	friend Vector& operator+(Point&, Point&);//Vector = Point+Point
+	// friend Vector& operator-(Point&, Point&);//Vector = Point-Point
+	// friend Vector& operator+(Point&, Point&);//Vector = Point+Point
 	
 	float squarednorm();			//returns square of norm
 	float norm();				//returns norm

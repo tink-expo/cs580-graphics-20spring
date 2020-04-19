@@ -1,5 +1,9 @@
 #define _POINT
 
+#ifndef _VECTOR
+#include "vector.h"
+#endif
+
 #include <iostream>
 //#include <iostream.h>
 
@@ -20,6 +24,8 @@ public:
 	float& x() {return X;}
 	float& y() {return Y;}
 	float& z() {return Z;}
+
+	Vector& operator-(Point& p);
 	
 	
 	friend ostream& operator<<(ostream&,Point);  //writing
