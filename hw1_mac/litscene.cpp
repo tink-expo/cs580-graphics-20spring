@@ -1,6 +1,15 @@
 #include "litscene.h"
 #include <math.h>
 
+namespace {
+
+float clamp0to1(float val)
+{
+  return max(0.0f, min(val, 1.0f));
+}
+
+}  // namespace
+
 
 ostream& operator<<(ostream& s, LitScene scene)
 {
@@ -61,14 +70,42 @@ Colour LitScene::colourOnObject(GObject *object, Point p, Point eye)
   Colour ka = object->material().ambient();
   colour = ka*Ambient;
 
-
   // Your code here! (in the loop below - some hints are given) 
   // Task 2, 3, 4 must be implemented in this for statement
+
   for (int i = 0; i < NLights; ++i) {
 
     Light light = lightAt(i);
 
+    Vector light_dir;
+    float light_sq_dist;
+    if (!light.directional()) {
+      Vector light_dir_sized = light.point() - p;
+      light_dir = light_dir_sized.normalised();
+      light_sq_dist = light_dir_sized.squarednorm();
+    } else {
+      light_dir = light.vector();  // normalised
+      light_dir = light_dir * (-1);
+    }
 
+    float diffuse_factor = clamp0to1(n ^ light_dir);
+    if (!light.directional()) {
+      diffuse_factor /= light_sq_dist;
+    }
+    Colour diffuse_colour = object->material().diffuse() * light.intensity();
+    diffuse_colour = diffuse_colour * diffuse_factor;
+
+    Vector view_dir = (eye - p).normalised();
+    Vector half_dir = (add(light_dir, view_dir)).normalised();
+    float spec_factor = power(clamp0to1(n ^ half_dir), object->material().shininess());
+    if (!light.directional()) {
+      spec_factor /= light_sq_dist;
+    }
+    Colour spec_colour = object->material().specular() * light.intensity();
+    spec_colour = spec_colour * spec_factor;
+
+    colour = colour + diffuse_colour;
+    colour = colour + spec_colour;
   }
   // No more code to add after here! 
   //check that the colour is in the bounds 0 to 1
