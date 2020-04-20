@@ -16,6 +16,12 @@ float ClockwisednessProjX(
       (p3.z() - p2.z()) * (p1.y() - p2.y());
 }
 
+float ClockwisednessProjY(
+    Point& p1, Point& p2, Point& p3) {
+  return (p3.z() - p2.z()) * (p1.x() - p2.x()) -
+      (p3.x() - p2.x()) * (p1.z() - p2.z());
+}
+
 }  // namespace
 
 Polygon::Polygon(Material mat, int m) : GObject()
@@ -179,28 +185,42 @@ bool Polygon::intersect(Ray ray, float& t, Colour& colour)
   float t_numer = -evalPlaneEquation(ray.origin());
   float t_denom = evalPlaneEquation(ray.direction()) + D;
   if (t_denom == 0) {
+    if (t_numer != 0) {
+      return false;
+
+    } else {
+
+    }
+  }
+
+  t = t_numer / t_denom;
+  if (t < 0) {
     return false;
   }
-  t = t_numer / t_denom;
 
   Point q = ray.pointAt(t);
-  float clock_z = ClockwisednessProjZ(P[N - 1], q, P[0]);
-  if (clock_z == 0) {
-    float clock_x = ClockwisednessProjX(P[N - 1], q, P[0]);
-    for (int i = 0; i < N - 1; ++i) {
-      if (clock_x * ClockwisednessProjX(P[i], q, P[i + 1]) < 0) {
-        return false;
-      }
-    }
 
-  } else {
-    for (int i = 0; i < N - 1; ++i) {
-      if (clock_z * ClockwisednessProjZ(P[i], q, P[i + 1]) < 0) {
-        return false;
-      }
+  // TODO: Optimize
+  Vector bm_cross = (P[N - 1] - q) * (P[0] - q);
+  int bm_axis = 0;
+  float bm_val = bm_cross.x();
+  if (bm_val == 0) {
+    bm_axis = 1;
+    bm_val = bm_cross.y();
+  }
+  if (bm_val == 0) {
+    bm_axis = 2;
+    bm_val = bm_cross.z();
+  }
+  
+  for (int i = 0; i < N - 1; ++i) {
+    Vector cmp_cross = (P[i] - q) * (P[i + 1] - q);
+    float cmp_val = bm_axis == 0 ? cmp_cross.x() : (bm_axis == 1 ? cmp_cross.y() : cmp_cross.z());
+    if (bm_val * cmp_val < 0) {
+      return false;
     }
   }
-  // colour = Colour(1.0, 1.0, 0.0);
+
   colour = this->material().ambient();
   return true;
 }

@@ -33,8 +33,7 @@ void display(void)
       {
         set_pixel(i, j, col);
       } else {
-        set_pixel(i, j, Colour(1.0, 1.0, 1.0));
-        // cout << i << " " << j << endl;
+        set_pixel(i, j, Colour(1, 1, 1));
       }
     }
 

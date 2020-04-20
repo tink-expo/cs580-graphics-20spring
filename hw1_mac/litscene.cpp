@@ -124,4 +124,5 @@ at the intersection point. This overrides the method in Scene*/
   {
     return false;
   }
+  return found;
 }
