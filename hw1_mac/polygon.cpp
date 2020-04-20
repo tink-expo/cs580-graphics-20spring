@@ -2,28 +2,6 @@
 
 #include "polygon.h"
 
-namespace {
-
-float ClockwisednessProjZ(
-    Point& p1, Point& p2, Point& p3) {
-  return (p3.x() - p2.x()) * (p1.y() - p2.y()) -
-      (p3.y() - p2.y()) * (p1.x() - p2.x());
-}
-
-float ClockwisednessProjX(
-    Point& p1, Point& p2, Point& p3) {
-  return (p3.y() - p2.y()) * (p1.z() - p2.z()) -
-      (p3.z() - p2.z()) * (p1.y() - p2.y());
-}
-
-float ClockwisednessProjY(
-    Point& p1, Point& p2, Point& p3) {
-  return (p3.z() - p2.z()) * (p1.x() - p2.x()) -
-      (p3.x() - p2.x()) * (p1.z() - p2.z());
-}
-
-}  // namespace
-
 Polygon::Polygon(Material mat, int m) : GObject()
 {
   material() = mat;
@@ -200,28 +178,25 @@ bool Polygon::intersect(Ray ray, float& t, Colour& colour)
 
   Point q = ray.pointAt(t);
 
-  // TODO: Optimize
-  Vector bm_cross = (P[N - 1] - q) * (P[0] - q);
-  int bm_axis = 0;
-  float bm_val = bm_cross.x();
-  if (bm_val == 0) {
-    bm_axis = 1;
-    bm_val = bm_cross.y();
-  }
-  if (bm_val == 0) {
-    bm_axis = 2;
-    bm_val = bm_cross.z();
-  }
-  
-  for (int i = 0; i < N - 1; ++i) {
-    Vector cmp_cross = (P[i] - q) * (P[i + 1] - q);
-    float cmp_val = bm_axis == 0 ? cmp_cross.x() : (bm_axis == 1 ? cmp_cross.y() : cmp_cross.z());
-    if (bm_val * cmp_val < 0) {
-      return false;
+  int bm_sign = addCrossSign(P[N - 1], P[0], q);
+  if (bm_sign != 0) {
+    for (int i = 0; i < N - 1; ++i) {
+      int cmp_sign = addCrossSign(P[i], P[i + 1], q);
+      if (bm_sign * cmp_sign < 0) {
+        return false;
+      }
     }
   }
 
   colour = this->material().ambient();
   return true;
+}
+
+int Polygon::addCrossSign(Point& p1, Point& p2, Point& q)
+{
+  Vector cross = (p1 - q) * (p2 - q);
+  Point added(q.x() + cross.x(), q.y() + cross.y(), q.z() + cross.z());
+  float eval = evalPlaneEquation(added);
+  return eval > 0 ? 1 : (eval < 0 ? -1 : 0);
 }
 

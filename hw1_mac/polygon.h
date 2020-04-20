@@ -40,4 +40,7 @@ public :
 	friend istream& operator>>(istream&,Polygon&); //reading
 	void print(ostream&);
 	void read(istream&);
+
+private:
+	int addCrossSign(Point& p1, Point& p2, Point& q);
 };
