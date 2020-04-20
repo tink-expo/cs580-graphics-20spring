@@ -29,10 +29,12 @@ void display(void)
   for (i = 0; i < Nx; i++)
     for (j = 0; j < Ny; j++) {
       Ray ray = TheCamera.ray(i, j);
-      // if (i == 0 || TheScene.intersect(NULL, ray, col, DEPTH))
-	  if (i == 200)
+      if (TheScene.intersect(NULL, ray, col, DEPTH))
       {
         set_pixel(i, j, col);
+      } else {
+        set_pixel(i, j, Colour(1.0, 1.0, 1.0));
+        // cout << i << " " << j << endl;
       }
     }
 
@@ -78,8 +80,6 @@ int main(int argc, char **argv)
   TheCamera.setVPWindow(-2.0, 2.0, -2.0, 2.0);
   TheCamera.zcop() = 2.5;
 
-  // TODO: Erase this line before submission.
-  freopen("CS580_cornel_box.dat", "r", stdin);
   /* read the scene from standard input*/
   cin >> TheScene;
 

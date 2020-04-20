@@ -13,6 +13,8 @@ public:
 	Colour(float,float,float);	
 	Colour(const Colour&);	  		//initialisation from another colour
 	Colour& operator=(const Colour&); 	//assignment
+
+	bool operator==(const Colour&) const;
 	
 	
 	float& red() {return Red;}

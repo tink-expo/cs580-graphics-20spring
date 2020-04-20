@@ -25,6 +25,11 @@ Colour& Colour::operator=(const Colour& colour)
   return *this;
 }
 
+bool Colour::operator==(const Colour& colour) const
+{
+  return Red == colour.Red && Green == colour.Green && Blue == colour.Blue;
+}
+
 void Colour::reset(float red, float green, float blue)
 {
   Red = red;

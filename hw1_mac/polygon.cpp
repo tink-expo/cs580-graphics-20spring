@@ -2,6 +2,22 @@
 
 #include "polygon.h"
 
+namespace {
+
+float ClockwisednessProjZ(
+    Point& p1, Point& p2, Point& p3) {
+  return (p3.x() - p2.x()) * (p1.y() - p2.y()) -
+      (p3.y() - p2.y()) * (p1.x() - p2.x());
+}
+
+float ClockwisednessProjX(
+    Point& p1, Point& p2, Point& p3) {
+  return (p3.y() - p2.y()) * (p1.z() - p2.z()) -
+      (p3.z() - p2.z()) * (p1.y() - p2.y());
+}
+
+}  // namespace
+
 Polygon::Polygon(Material mat, int m) : GObject()
 {
   material() = mat;
@@ -156,7 +172,36 @@ bool Polygon::intersect(Ray ray, float& t, Colour& colour)
   //Your job is to fix it by some math you've learned from the course
   //It should return true if a given ray is intersect with the polygon
   //Update t and colour, which are the magnitude of the ray(vector) and the colour of intersecting point, respectively.
+  if (N < 3) {
+    return false;
+  }
 
-  return false;
+  float t_numer = -evalPlaneEquation(ray.origin());
+  float t_denom = evalPlaneEquation(ray.direction()) + D;
+  if (t_denom == 0) {
+    return false;
+  }
+  t = t_numer / t_denom;
+
+  Point q = ray.pointAt(t);
+  float clock_z = ClockwisednessProjZ(P[N - 1], q, P[0]);
+  if (clock_z == 0) {
+    float clock_x = ClockwisednessProjX(P[N - 1], q, P[0]);
+    for (int i = 0; i < N - 1; ++i) {
+      if (clock_x * ClockwisednessProjX(P[i], q, P[i + 1]) < 0) {
+        return false;
+      }
+    }
+
+  } else {
+    for (int i = 0; i < N - 1; ++i) {
+      if (clock_z * ClockwisednessProjZ(P[i], q, P[i + 1]) < 0) {
+        return false;
+      }
+    }
+  }
+  // colour = Colour(1.0, 1.0, 0.0);
+  colour = this->material().ambient();
+  return true;
 }
 
