@@ -102,7 +102,7 @@ Colour LitScene::colourOnObject(GObject *object, Point p, Point eye)
       }
     }
 
-    if (!shadow) {
+    if (true || !shadow) {
       float diffuse_factor = clamp0to1(n ^ light_dir);
       if (!light.directional()) {
         diffuse_factor *= attenuation;
