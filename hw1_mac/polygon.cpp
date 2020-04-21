@@ -188,7 +188,7 @@ bool Polygon::intersect(Ray ray, float& t, Colour& colour)
     }
   }
 
-  colour = this->material().ambient();
+  // colour = this->material().ambient();
   return true;
 }
 

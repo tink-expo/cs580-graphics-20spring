@@ -59,13 +59,13 @@ static float power(float x, int n)
 
 Colour LitScene::colourOnObject(GObject *object, Point p, Point eye)
 {
-  bool shadow = false;
   Vector  n = object->normal(p); //normal vector
   Ray shadowray;
+  shadowray.origin() = p;
+  Colour colour_dummy;
 
   Colour colour;
-
-
+  
   //compute ambient component
   Colour ka = object->material().ambient();
   colour = ka*Ambient;
@@ -79,33 +79,49 @@ Colour LitScene::colourOnObject(GObject *object, Point p, Point eye)
 
     Vector light_dir;
     float light_sq_dist;
+    float attenuation;
     if (!light.directional()) {
-      Vector light_dir_sized = light.point() - p;
-      light_dir = light_dir_sized.normalised();
-      light_sq_dist = light_dir_sized.squarednorm();
+      light_dir = light.point() - p;
+      light_sq_dist = light_dir.squarednorm();
+      light_dir.normalise();
+
+      attenuation = 1.0 / (1.0 + 0.09 * sqrt(light_sq_dist) + 0.032 * light_sq_dist);
     } else {
       light_dir = light.vector();  // normalised
       light_dir = light_dir * (-1);
     }
 
-    float diffuse_factor = clamp0to1(n ^ light_dir);
-    if (!light.directional()) {
-      diffuse_factor /= light_sq_dist;
+    bool shadow = false;
+    shadowray.direction() = light_dir;
+    for (int i = 0; i < numObjects(); ++i) {
+      float t;
+      if (at(i) != object && at(i)->intersect(shadowray, t, colour_dummy) &&
+          (light.directional() || t * t <= light_sq_dist)) {
+        shadow = true;
+        break;
+      }
     }
-    Colour diffuse_colour = object->material().diffuse() * light.intensity();
-    diffuse_colour = diffuse_colour * diffuse_factor;
 
-    Vector view_dir = (eye - p).normalised();
-    Vector half_dir = (add(light_dir, view_dir)).normalised();
-    float spec_factor = power(clamp0to1(n ^ half_dir), object->material().shininess());
-    if (!light.directional()) {
-      spec_factor /= light_sq_dist;
+    if (!shadow) {
+      float diffuse_factor = clamp0to1(n ^ light_dir);
+      if (!light.directional()) {
+        diffuse_factor *= attenuation;
+      }
+      Colour diffuse_colour = object->material().diffuse() * light.intensity();
+      diffuse_colour = diffuse_colour * diffuse_factor;
+
+      Vector view_dir = (eye - p).normalised();
+      Vector half_dir = (add(light_dir, view_dir)).normalised();
+      float spec_factor = power(clamp0to1(n ^ half_dir), object->material().shininess());
+      if (!light.directional()) {
+        spec_factor *= attenuation;
+      }
+      Colour spec_colour = object->material().specular() * light.intensity();
+      spec_colour = spec_colour * spec_factor;
+
+      colour = colour + diffuse_colour;
+      colour = colour + spec_colour;
     }
-    Colour spec_colour = object->material().specular() * light.intensity();
-    spec_colour = spec_colour * spec_factor;
-
-    colour = colour + diffuse_colour;
-    colour = colour + spec_colour;
   }
   // No more code to add after here! 
   //check that the colour is in the bounds 0 to 1
@@ -128,23 +144,23 @@ at the intersection point. This overrides the method in Scene*/
   Ray reflected;
   if (depth == 0) return false; /* end of recursion */
 
-
+  Colour colour_dummy;
 //for each object
   for (int i = 0; i < numObjects(); ++i) {
     float t;
     Colour col;
-    if ((at(i) != me) && at(i)->intersect(ray, t, col)) {
+    if ((at(i) != me) && at(i)->intersect(ray, t, colour_dummy)) {
       //intersection found
       if ((t < tmin) && (t > 0.0)) {
         object = at(i);
         tmin = t;
-        colour = col;
+        // colour = col;
         found = true;
       }
     }
   }
   if (found) {//an object has been found with the smallest intersection
-    Colour refl_col;
+    // Colour refl_col;
     /*find the intersection point*/
     Point p = ray.pointAt(tmin);
 

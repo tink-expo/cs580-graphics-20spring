@@ -86,7 +86,7 @@ bool Sphere::intersect(Ray ray, float& t, Colour& colour)
       return false;
     }
   }
-  colour = this->material().ambient();
+  // colour = this->material().ambient();
   return true;
 }
 
