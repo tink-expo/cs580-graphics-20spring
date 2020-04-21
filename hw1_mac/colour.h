@@ -20,18 +20,21 @@ public:
 	float& red() {return Red;}
 	float& green() {return Green;}
 	float& blue() {return Blue;}
+	float red() const {return Red;}
+	float green() const {return Green;}
+	float blue() const {return Blue;}
 	
 	void reset(float, float, float);	//resets the colour
 	
 	void check(); //checks in range 0 to 1 and adjusts if not
 	
-	friend Colour operator*(Colour&,Colour&); //returns product of two colours
+	friend Colour operator*(const Colour&, const Colour&); //returns product of two colours
 	
-	friend Colour operator+(Colour&,Colour&); //returns sum of two colours
+	friend Colour operator+(const Colour&, const Colour&); //returns sum of two colours
 	
-	friend Colour operator*(Colour&,float); //colour * scalar
+	friend Colour operator*(const Colour&,float); //colour * scalar
 	
-	friend ostream& operator<<(ostream&,Colour);  //writing
+	friend ostream& operator<<(ostream&, const Colour&);  //writing
 	friend istream& operator>>(istream&,Colour&); //reading
 };
 

@@ -111,9 +111,11 @@ Colour LitScene::colourOnObject(GObject *object, Point p, Point eye)
       Colour diffuse_colour = object->material().diffuse() * light.intensity();
       diffuse_colour = diffuse_colour * diffuse_factor;
 
-      Vector view_dir = (eye - p).normalised();
-      Vector half_dir = (add(light_dir, view_dir)).normalised();
-      float spec_factor = power(clamp0to1(n ^ half_dir), object->material().shininess());
+      Vector view_dir = eye - p;
+      view_dir.normalise();
+      Vector half_dir = add(light_dir, view_dir);
+      half_dir.normalise();
+      float spec_factor = pow(clamp0to1(n ^ half_dir), object->material().shininess());
       if (!light.directional()) {
         spec_factor *= attenuation;
       }
@@ -128,14 +130,13 @@ Colour LitScene::colourOnObject(GObject *object, Point p, Point eye)
   //check that the colour is in the bounds 0 to 1
   colour.check();
 
-
   return colour;
 }
 
 
 
 
-bool LitScene::intersect(GObject* me, Ray ray, Colour& colour, int depth, int i, int j)
+bool LitScene::intersect(GObject* me, Ray ray, Colour& colour, int depth)
 /*returns true if the ray intersects the scene, and if so then the colour
 at the intersection point. This overrides the method in Scene*/
 {
@@ -146,7 +147,7 @@ at the intersection point. This overrides the method in Scene*/
   if (depth == 0) return false; /* end of recursion */
 
   Colour colour_dummy;
-//for each object
+  //for each object
   for (int i = 0; i < numObjects(); ++i) {
     float t;
     Colour col;
@@ -174,14 +175,13 @@ at the intersection point. This overrides the method in Scene*/
       refl_ray.origin() = p;
 
       Vector r_dir = ray.direction();
-      Vector n = object->normal(p);
       r_dir.normalise();
-      refl_ray.direction() = n * (-2.0f * (r_dir ^ n));
-      refl_ray.direction() = add(refl_ray.direction(), r_dir);
+      Vector n = object->normal(p);
+      refl_ray.direction() = subtract(r_dir, n * (2.0f * (r_dir ^ n)));
 
       Colour refl_col;
       
-      if (intersect(object, refl_ray, refl_col, depth - 1, -1, -1)) {
+      if (intersect(object, refl_ray, refl_col, depth - 1)) {
         colour = colour + refl_col;
       }
     }

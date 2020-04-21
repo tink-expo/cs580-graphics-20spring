@@ -38,12 +38,12 @@ void Colour::reset(float red, float green, float blue)
 }
 
 
-Colour operator*(Colour& a, Colour& b)
+Colour operator*(const Colour& a, const Colour& b)
 {
   return Colour(a.Red*b.Red, a.Green*b.Green, a.Blue*b.Blue);
 }
 
-Colour operator*(Colour& a, float x)
+Colour operator*(const Colour& a, float x)
 {
   return Colour(a.Red*x, a.Green*x, a.Blue*x);
 }
@@ -63,13 +63,13 @@ void Colour::check()
   setinterval(Blue);
 }
 
-Colour operator+(Colour& a, Colour& b)
+Colour operator+(const Colour& a, const Colour& b)
 {
   return Colour(a.Red + b.Red, a.Green + b.Green, a.Blue + b.Blue);
 }
 
 
-ostream& operator<<(ostream& s, Colour colour)
+ostream& operator<<(ostream& s, const Colour& colour)
 //writing
 {
   s << "(" << colour.Red << "R"
