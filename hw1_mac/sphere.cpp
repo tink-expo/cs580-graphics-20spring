@@ -79,8 +79,13 @@ bool Sphere::intersect(Ray ray, float& t, Colour& colour)
   if (sqrt_inner < 0) {
     return false;
   }
-  
   t = (-quad_b - static_cast<float>(sqrt(sqrt_inner))) / (2 * quad_a);
+  if (t < 0) {
+    t = (-quad_b + static_cast<float>(sqrt(sqrt_inner))) / (2 * quad_a);
+    if (t < 0) {
+      return false;
+    }
+  }
   colour = this->material().ambient();
   return true;
 }
