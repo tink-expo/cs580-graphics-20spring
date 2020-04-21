@@ -102,7 +102,7 @@ Colour LitScene::colourOnObject(GObject *object, Point p, Point eye)
       }
     }
 
-    if (true || !shadow) {
+    if (!shadow) {
       float diffuse_factor = clamp0to1(n ^ light_dir);
       if (!light.directional()) {
         diffuse_factor *= attenuation;
@@ -160,12 +160,12 @@ at the intersection point. This overrides the method in Scene*/
     }
   }
   if (found) {//an object has been found with the smallest intersection
-    // Colour refl_col;
     /*find the intersection point*/
     Point p = ray.pointAt(tmin);
 
     //Your code here
     //Task - 5 -recursive ray tracing must be written here.
+    Colour refl_col;
 
     //now we want the colour computed at point p on the object
     colour = colourOnObject(object, p, ray.origin());
