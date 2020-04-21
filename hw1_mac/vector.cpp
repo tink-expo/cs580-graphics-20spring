@@ -107,59 +107,59 @@ istream& operator >> (istream& s, Vector& p)
 //   return *v;
 // }
 
-Vector& add(Vector& p1, Vector& p2)
+Vector add(const Vector& p1, const Vector& p2)
 //returns p1 + p2
 {
-  Vector* v = new Vector;
+  Vector v;
 
-  v->X = p1.x() + p2.x();
-  v->Y = p1.y() + p2.y();
-  v->Z = p1.z() + p2.z();
+  v.X = p1.x() + p2.x();
+  v.Y = p1.y() + p2.y();
+  v.Z = p1.z() + p2.z();
 
-  return *v;
+  return v;
 }
 
-Vector& subtract(Vector& p1, Vector& p2)
+Vector subtract(const Vector& p1, const Vector& p2)
 //returns p1 + p2
 {
-  Vector* v = new Vector;
+  Vector v;
 
-  v->X = p1.x() - p2.x();
-  v->Y = p1.y() - p2.y();
-  v->Z = p1.z() - p2.z();
+  v.X = p1.x() - p2.x();
+  v.Y = p1.y() - p2.y();
+  v.Z = p1.z() - p2.z();
 
-  return *v;
+  return v;
 }
 
-float operator^(Vector& u, Vector& v)
+float operator^(const Vector& u, const Vector& v)
 //returns dot product
 {
   return u.X*v.X + u.Y*v.Y + u.Z*v.Z;
 }
 
-Vector& operator*(Vector& v1, Vector& v2)
+Vector operator*(const Vector& v1, const Vector& v2)
 //returns cross product
 {
-  Vector* vout = new Vector;
+  Vector vout;
 
-  vout->X = v1.Y*v2.Z - v1.Z*v2.Y;
-  vout->Y = v1.Z*v2.X - v1.X*v2.Z;
-  vout->Z = v1.X*v2.Y - v1.Y*v2.X;
+  vout.X = v1.Y*v2.Z - v1.Z*v2.Y;
+  vout.Y = v1.Z*v2.X - v1.X*v2.Z;
+  vout.Z = v1.X*v2.Y - v1.Y*v2.X;
 
-  return *vout;
+  return vout;
 }
 
 
-Vector& operator*(Vector& v1, float a)
+Vector operator*(const Vector& v1, float a)
 //vector by scalar
 {
-  Vector* vout = new Vector;
+  Vector vout;
 
-  vout->X = v1.X*a;
-  vout->Y = v1.Y*a;
-  vout->Z = v1.Z*a;
+  vout.X = v1.X*a;
+  vout.Y = v1.Y*a;
+  vout.Z = v1.Z*a;
 
-  return *vout;
+  return vout;
 }
 
 

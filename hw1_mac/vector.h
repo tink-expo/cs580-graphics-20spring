@@ -27,15 +27,18 @@ public:
 	float norm();				//returns norm
 	void normalise();			//normalises 
 	Vector& normalised();			//returns normalised vector
-	friend Vector& add(Vector&,Vector&);	       	//add two vectors
-	friend Vector& subtract(Vector&,Vector&);	       	//subtract
-	friend float operator^(Vector&,Vector&);   //dot product
-	friend Vector& operator*(Vector&,Vector&); //cross product
-	friend Vector& operator*(Vector&, float);//Vector = vector * scalar
+	friend Vector add(const Vector&, const Vector&);	       	//add two vectors
+	friend Vector subtract(const Vector&, const Vector&);	       	//subtract
+	friend float operator^(const Vector&, const Vector&);   //dot product
+	friend Vector operator*(const Vector&, const Vector&); //cross product
+	friend Vector operator*(const Vector&, float);//Vector = vector * scalar
 	
-	float &x() {return X;}
-	float &y() {return Y;}
-	float &z() {return Z;}
+	float x() const {return X;}
+	float y() const {return Y;}
+	float z() const {return Z;}
+	float& x() {return X;}
+	float& y() {return Y;}
+	float& z() {return Z;}
 		
 	friend ostream& operator<<(ostream&,Vector);  //writing
 	friend istream& operator>>(istream&,Vector&); //reading

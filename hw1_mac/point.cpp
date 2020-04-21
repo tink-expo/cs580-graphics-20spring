@@ -48,13 +48,13 @@ istream& operator >> (istream& s, Point& p)
   return s;
 }
 
-Vector& Point::operator-(Point& p)
+Vector Point::operator-(const Point& p)
 {
-  Vector* v = new Vector;
+  Vector v;
 
-  v->x() = X - p.x();
-  v->y() = Y - p.y();
-  v->z() = Z - p.z();
+  v.x() = X - p.x();
+  v.y() = Y - p.y();
+  v.z() = Z - p.z();
 
-  return *v;
+  return v;
 }

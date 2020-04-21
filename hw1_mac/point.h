@@ -24,8 +24,11 @@ public:
 	float& x() {return X;}
 	float& y() {return Y;}
 	float& z() {return Z;}
+	float x() const {return X;}
+	float y() const {return Y;}
+	float z() const {return Z;}
 
-	Vector& operator-(Point& p);
+	Vector operator-(const Point& p);
 	
 	
 	friend ostream& operator<<(ostream&,Point);  //writing

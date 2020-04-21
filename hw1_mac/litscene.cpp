@@ -1,5 +1,6 @@
 #include "litscene.h"
 #include <math.h>
+#include <algorithm>
 
 namespace {
 
