@@ -58,7 +58,7 @@ static float power(float x, int n)
   else return x * power(x, n - 1);
 }
 
-Colour LitScene::colourOnObject(GObject *object, Point p, Point eye)
+Colour LitScene::colourOnObject(GObject *object, const Point& p, const Point& eye)
 {
   Vector  n = object->normal(p); //normal vector
   Ray shadowray;
@@ -109,21 +109,20 @@ Colour LitScene::colourOnObject(GObject *object, Point p, Point eye)
         diffuse_factor *= attenuation;
       }
       Colour diffuse_colour = object->material().diffuse() * light.intensity();
-      diffuse_colour = diffuse_colour * diffuse_factor;
+      colour = colour + diffuse_colour * diffuse_factor;
 
-      Vector view_dir = eye - p;
-      view_dir.normalise();
-      Vector half_dir = add(light_dir, view_dir);
-      half_dir.normalise();
-      float spec_factor = pow(clamp0to1(n ^ half_dir), object->material().shininess());
-      if (!light.directional()) {
-        spec_factor *= attenuation;
+      if (!(object->material().specular() == Black)) {
+        Vector view_dir = eye - p;
+        view_dir.normalise();
+        Vector half_dir = add(light_dir, view_dir);
+        half_dir.normalise();
+        float spec_factor = pow(clamp0to1(n ^ half_dir), object->material().shininess());
+        if (!light.directional()) {
+          spec_factor *= attenuation;
+        }
+        Colour spec_colour = object->material().specular() * light.intensity();
+        colour = colour + spec_colour * spec_factor;
       }
-      Colour spec_colour = object->material().specular() * light.intensity();
-      spec_colour = spec_colour * spec_factor;
-
-      colour = colour + diffuse_colour;
-      colour = colour + spec_colour;
     }
   }
   // No more code to add after here! 
@@ -180,7 +179,6 @@ at the intersection point. This overrides the method in Scene*/
       refl_ray.direction() = subtract(r_dir, n * (2.0f * (r_dir ^ n)));
 
       Colour refl_col;
-      
       if (intersect(object, refl_ray, refl_col, depth - 1)) {
         colour = colour + refl_col;
       }

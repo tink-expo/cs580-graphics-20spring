@@ -11,6 +11,7 @@ set(GLUT_LIBRARIES libglut.3.dylib)
 set(GLUT_INCLUDE_DIRS /opt/X11/include)
 set(GLUT_LIBRARY_DIRS /opt/X11/lib)
 
+add_compile_options ( "-O2" )
 add_compile_definitions( "GL_SILENCE_DEPRECATION" )
 
 include_directories ( ${OPENGL_INCLUDE_DIRS} ${GLUT_INCLUDE_DIRS} )

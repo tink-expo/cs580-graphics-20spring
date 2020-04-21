@@ -48,7 +48,7 @@ istream& operator >> (istream& s, Point& p)
   return s;
 }
 
-Vector Point::operator-(const Point& p)
+Vector Point::operator-(const Point& p) const
 {
   Vector v;
 

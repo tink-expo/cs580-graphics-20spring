@@ -28,7 +28,7 @@ public:
 	float y() const {return Y;}
 	float z() const {return Z;}
 
-	Vector operator-(const Point& p);
+	Vector operator-(const Point& p) const;
 	
 	
 	friend ostream& operator<<(ostream&,Point);  //writing
