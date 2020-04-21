@@ -97,7 +97,7 @@ Colour LitScene::colourOnObject(GObject *object, const Point& p, const Point& ey
     for (int i = 0; i < numObjects(); ++i) {
       float t;
       if (at(i) != object && at(i)->intersect(shadowray, t, colour_dummy) &&
-          (light.directional() || t * t <= light_sq_dist)) {
+          (light.directional() || (t > 0 && t * t <= light_sq_dist))) {
         shadow = true;
         break;
       }
@@ -180,7 +180,7 @@ at the intersection point. This overrides the method in Scene*/
 
       Colour refl_col;
       if (intersect(object, refl_ray, refl_col, depth - 1)) {
-        colour = colour + refl_col;
+        colour = colour + refl_col * object->material().specular();
       }
     }
 
