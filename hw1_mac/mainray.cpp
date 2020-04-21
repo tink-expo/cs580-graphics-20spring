@@ -29,11 +29,9 @@ void display(void)
   for (i = 0; i < Nx; i++)
     for (j = 0; j < Ny; j++) {
       Ray ray = TheCamera.ray(i, j);
-      if (TheScene.intersect(NULL, ray, col, DEPTH))
+      if (TheScene.intersect(NULL, ray, col, DEPTH, i, j))
       {
         set_pixel(i, j, col);
-      } else {
-        set_pixel(i, j, Colour(1, 1, 1));
       }
     }
 

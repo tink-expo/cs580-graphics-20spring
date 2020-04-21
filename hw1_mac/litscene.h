@@ -28,7 +28,7 @@ public:
 	int& numberOfLights() {return NLights;}
 	
 	Colour colourOnObject(GObject*,Point, Point);
-	bool intersect(GObject*,Ray,Colour&,int);
+	bool intersect(GObject*,Ray,Colour&,int, int i, int j);
 		
 	friend ostream& operator<<(ostream&,LitScene);  //writing
 	friend istream& operator>>(istream&,LitScene&); //reading

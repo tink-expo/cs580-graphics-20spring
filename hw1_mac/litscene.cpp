@@ -134,7 +134,7 @@ Colour LitScene::colourOnObject(GObject *object, Point p, Point eye)
 
 
 
-bool LitScene::intersect(GObject* me, Ray ray, Colour& colour, int depth)
+bool LitScene::intersect(GObject* me, Ray ray, Colour& colour, int depth, int i, int j)
 /*returns true if the ray intersects the scene, and if so then the colour
 at the intersection point. This overrides the method in Scene*/
 {
@@ -163,12 +163,27 @@ at the intersection point. This overrides the method in Scene*/
     /*find the intersection point*/
     Point p = ray.pointAt(tmin);
 
-    //Your code here
-    //Task - 5 -recursive ray tracing must be written here.
-    Colour refl_col;
-
     //now we want the colour computed at point p on the object
     colour = colourOnObject(object, p, ray.origin());
+
+    //Your code here
+    //Task - 5 -recursive ray tracing must be written here.
+    if (!(object->material().specular() == Black)) {
+      Ray refl_ray;
+      refl_ray.origin() = p;
+
+      Vector r_dir = ray.direction();
+      Vector n = object->normal(p);
+      r_dir.normalise();
+      refl_ray.direction() = n * (-2.0f * (r_dir ^ n));
+      refl_ray.direction() = add(refl_ray.direction(), r_dir);
+
+      Colour refl_col;
+      
+      if (intersect(object, refl_ray, refl_col, depth - 1, -1, -1)) {
+        colour = colour + refl_col;
+      }
+    }
 
     colour.check();
     return true;
