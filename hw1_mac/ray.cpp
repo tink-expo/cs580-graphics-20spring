@@ -7,7 +7,7 @@ ostream& operator<<(ostream& s, Ray ray)
   return s;
 }
 
-Point Ray::pointAt(float t)
+Point Ray::pointAt(float t) const
 //returns the point along the ray at t
 {
   return Point(Origin.x() + t*Direction.x(),

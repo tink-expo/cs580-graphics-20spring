@@ -18,8 +18,10 @@ public:
 	
 	Point& origin() {return Origin;}
 	Vector& direction() {return Direction;}
+	const Point& origin() const {return Origin;}
+	const Vector& direction() const {return Direction;}
 	
-	Point pointAt(float);
+	Point pointAt(float) const;
 	
 	friend ostream& operator<<(ostream&,Ray);  //writing
 	

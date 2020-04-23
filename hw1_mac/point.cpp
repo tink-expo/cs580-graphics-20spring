@@ -30,6 +30,11 @@ Point& Point::operator=(const Point& p)
   return *this;
 }
 
+bool Point::operator==(const Point& p) const
+{
+  return X == p.X && Y == p.Y && Z == p.Z;
+}
+
 ostream& operator<<(ostream& s, Point p)
 //writing
 {

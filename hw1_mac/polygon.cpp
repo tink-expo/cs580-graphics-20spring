@@ -1,6 +1,84 @@
 #include "math.h"
+#include <algorithm>
 
 #include "polygon.h"
+
+namespace {
+
+bool pointOn(const Vector& r_dir, const Point& r_origin, const Point& p, float& t)
+{
+  // assert r_dir is normalised.
+  Vector p_dir = p - r_origin;
+  t = r_dir.x() != 0 ? 
+      p_dir.x() / r_dir.x() :
+      (r_dir.y() != 0 ?
+      p_dir.y() / r_dir.y() :
+      p_dir.z() / r_dir.z());
+  p_dir.normalise();
+
+  return r_dir == p_dir ? t >= 0 : false;
+}
+
+Point add(const Point& p, const Vector& v) {
+  Point q = p;
+  q.x() += v.x();
+  q.y() += v.y();
+  q.z() += v.z();
+  return q;
+}
+
+float intersectLineseg(const Point& p1, const Point& p2, const Ray& ray)
+{
+  Vector r_dir = ray.direction();
+  float r_norm = r_dir.norm();
+  if (r_norm == 0) {
+    return (p1 == ray.origin() || p2 == ray.origin()) ? 0 : -1;
+  }
+  r_dir.normalise();
+
+  float t1;
+  float t2;
+  bool b1 = pointOn(r_dir, ray.origin(), p1, t1);
+  bool b2 = pointOn(r_dir, ray.origin(), p2, t2);
+  if (b1 && b2) {
+    return min(t1, t2);
+  } else if (b1 && !b2) {
+    return t1;
+  } else if (!b1 && b2) {
+    return t2;
+  }
+
+  Vector p_sub = p2 - p1;
+  Vector o_to_p = p2 - ray.origin();
+  float numer = (p_sub * o_to_p).norm();
+  if (numer == 0) {
+    return -1;
+  }
+  float denom = (p_sub * r_dir).norm();
+  if (denom == 0) {
+    return -1;
+  }
+  float t = numer / denom;
+  Point q = add(ray.origin(), r_dir * t);
+  if (q == p1 || q == p2) {
+    return t;
+  }
+
+  float t_dummy;
+  Vector pq = q - p1;
+  pq.normalise();
+  if (!pointOn(pq, p1, q, t_dummy)) {
+    return -1;
+  }
+  pq = q - p2;
+  pq.normalise();
+  if (!pointOn(pq, p2, q, t_dummy)) {
+    return -1;
+  }
+  return t / r_norm;
+}
+
+}  // namespace
 
 Polygon::Polygon(Material mat, int m) : GObject()
 {
@@ -51,7 +129,7 @@ float Polygon::evalPlaneEquation(Point p)
   return (Nm ^ (Vector &)p) - D;
 }
 
-float Polygon::evalPlaneEquation(Vector v)
+float Polygon::evalPlaneEquation(const Vector& v)
 //evaluates the plane equation at p
 {
   /*ax+by+cz-d*/
@@ -149,7 +227,7 @@ static float dyVal(Point p0, Point p1, int s)
   return yVal(p1, s) - yVal(p0, s);
 }
 
-bool Polygon::intersect(Ray ray, float& t, Colour& colour)
+bool Polygon::intersect(const Ray& ray, float& t, Colour& colour)
 {
   //Your code here...Task - 1. Implement the intersection test
   //This function returns 'false' for now.
@@ -167,7 +245,22 @@ bool Polygon::intersect(Ray ray, float& t, Colour& colour)
       return false;
 
     } else {
+      if (pointInside(ray.origin())) {
+        t = 0;
+        return true;
 
+      } else {
+        t = -1;
+        for (int i = 0; i < N; ++i) {
+          float t_lineseg = 
+              intersectLineseg(P[i], P[i + 1 < N ? i + 1 : 0], ray);
+          if (t_lineseg >= 0) {
+            t = t < 0 ? t_lineseg : min(t, t_lineseg);
+          }
+        }
+        return t >= 0;
+
+      }
     }
   }
 
@@ -178,6 +271,21 @@ bool Polygon::intersect(Ray ray, float& t, Colour& colour)
 
   Point q = ray.pointAt(t);
 
+  
+  // colour = this->material().ambient();
+  return pointInside(ray.pointAt(t));
+}
+
+int Polygon::addCrossSign(const Point& p1, const Point& p2, const Point& q)
+{
+  Vector cross = (p1 - q) * (p2 - q);
+  Point added(q.x() + cross.x(), q.y() + cross.y(), q.z() + cross.z());
+  float eval = evalPlaneEquation(added);
+  return eval > 0 ? 1 : (eval < 0 ? -1 : 0);
+}
+
+bool Polygon::pointInside(const Point& q)
+{
   int bm_sign = addCrossSign(P[N - 1], P[0], q);
   if (bm_sign != 0) {
     for (int i = 0; i < N - 1; ++i) {
@@ -187,16 +295,6 @@ bool Polygon::intersect(Ray ray, float& t, Colour& colour)
       }
     }
   }
-
-  // colour = this->material().ambient();
   return true;
-}
-
-int Polygon::addCrossSign(Point& p1, Point& p2, Point& q)
-{
-  Vector cross = (p1 - q) * (p2 - q);
-  Point added(q.x() + cross.x(), q.y() + cross.y(), q.z() + cross.z());
-  float eval = evalPlaneEquation(added);
-  return eval > 0 ? 1 : (eval < 0 ? -1 : 0);
 }
 

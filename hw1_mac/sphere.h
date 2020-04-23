@@ -18,7 +18,7 @@ public :
 	float& radius() {return Radius;}
 	
 	Vector normal(Point p) {return (p-Centre).normalised();}
-	bool intersect(Ray ray, float& t, Colour& colour);
+	bool intersect(const Ray& ray, float& t, Colour& colour);
 	
 	friend ostream& operator<<(ostream&,Sphere);  //writing
 	friend istream& operator>>(istream&,Sphere&); //reading

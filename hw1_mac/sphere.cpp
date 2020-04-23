@@ -37,7 +37,7 @@ void Sphere::read(istream& s)
   s >> *this;
 }
 
-bool Sphere::intersect(Ray ray, float& t, Colour& colour)
+bool Sphere::intersect(const Ray& ray, float& t, Colour& colour)
 {
 
   //Your code here...Task - 1. Implement the intersection test

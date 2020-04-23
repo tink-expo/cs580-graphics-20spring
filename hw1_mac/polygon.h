@@ -30,11 +30,11 @@ public :
 	void planeEquation(Vector& normal, float &d);
 	
 	float evalPlaneEquation(Point);
-	float evalPlaneEquation(Vector v);
+	float evalPlaneEquation(const Vector& v);
 	
 	Vector normal(Point) {return Nm;}; //Point is irrelevant here
 	
-	bool intersect(Ray ray, float& t, Colour& colour);
+	bool intersect(const Ray& ray, float& t, Colour& colour);
 	
 	friend ostream& operator<<(ostream&,Polygon);  //writing
 	friend istream& operator>>(istream&,Polygon&); //reading
@@ -42,5 +42,6 @@ public :
 	void read(istream&);
 
 private:
-	int addCrossSign(Point& p1, Point& p2, Point& q);
+	int addCrossSign(const Point& p1, const Point& p2, const Point& q);
+	bool pointInside(const Point& q);
 };

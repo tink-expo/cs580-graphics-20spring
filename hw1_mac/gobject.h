@@ -26,7 +26,7 @@ public:
 	
 	Material& material() {return Mat;}	
 	
-	virtual bool intersect(Ray ray, float& t, Colour& colour) = 0;
+	virtual bool intersect(const Ray& ray, float& t, Colour& colour) = 0;
 	virtual Vector normal(Point) = 0;
 	
 	virtual void print(ostream&) = 0;

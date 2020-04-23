@@ -31,6 +31,11 @@ Vector& Vector::operator=(const Vector& p)
   return *this;
 }
 
+bool Vector::operator==(const Vector& vec) const
+{
+  return X == vec.X && Y == vec.Y && Z == vec.Z;
+}
+
 float Vector::squarednorm()
 {
   return X*X + Y*Y + Z*Z;

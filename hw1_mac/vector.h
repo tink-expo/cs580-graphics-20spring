@@ -18,7 +18,10 @@ public:
 	Vector(float,float,float);
 	
 	Vector(const Vector&);	  		//initialisation from another
+
 	Vector& operator=(const Vector&); 	//assignment
+
+	bool operator==(const Vector& vec) const;
 	
 	// friend Vector& operator-(Point&, Point&);//Vector = Point-Point
 	// friend Vector& operator+(Point&, Point&);//Vector = Point+Point

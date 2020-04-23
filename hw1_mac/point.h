@@ -20,6 +20,8 @@ public:
 	
 	Point(const Point&);	  		//initialisation from another point
 	Point& operator=(const Point&); 	//assignment
+
+	bool operator==(const Point& p) const;
 	
 	float& x() {return X;}
 	float& y() {return Y;}
