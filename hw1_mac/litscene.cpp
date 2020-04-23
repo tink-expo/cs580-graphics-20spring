@@ -79,14 +79,11 @@ Colour LitScene::colourOnObject(GObject *object, const Point& p, const Point& ey
     Light light = lightAt(i);
 
     Vector light_dir;
-    float light_sq_dist;
-    float attenuation;
+    float light_dist_sq;
     if (!light.directional()) {
       light_dir = light.point() - p;
-      light_sq_dist = light_dir.squarednorm();
+      light_dist_sq = light_dir.squarednorm();
       light_dir.normalise();
-
-      attenuation = 1.0 / (1.0 + 0.09 * sqrt(light_sq_dist) + 0.032 * light_sq_dist);
     } else {
       light_dir = light.vector();  // normalised
       light_dir = light_dir * (-1);
@@ -97,19 +94,18 @@ Colour LitScene::colourOnObject(GObject *object, const Point& p, const Point& ey
     for (int i = 0; i < numObjects(); ++i) {
       float t;
       if (at(i) != object && at(i)->intersect(shadowray, t, colour_dummy) &&
-          (light.directional() || (t > 0 && t * t <= light_sq_dist))) {
+          (light.directional() || (t > 0 && t * t <= light_dist_sq))) {
         shadow = true;
         break;
       }
     }
 
     if (!shadow) {
-      float diffuse_factor = clamp0to1(n ^ light_dir);
-      if (!light.directional()) {
-        diffuse_factor *= attenuation;
+      if (!(object->material().diffuse() == Black)) {
+        float diffuse_factor = clamp0to1(n ^ light_dir);
+        Colour diffuse_colour = object->material().diffuse() * light.intensity();
+        colour = colour + diffuse_colour * diffuse_factor;
       }
-      Colour diffuse_colour = object->material().diffuse() * light.intensity();
-      colour = colour + diffuse_colour * diffuse_factor;
 
       if (!(object->material().specular() == Black)) {
         Vector view_dir = eye - p;
@@ -117,9 +113,6 @@ Colour LitScene::colourOnObject(GObject *object, const Point& p, const Point& ey
         Vector half_dir = add(light_dir, view_dir);
         half_dir.normalise();
         float spec_factor = pow(clamp0to1(n ^ half_dir), object->material().shininess());
-        if (!light.directional()) {
-          spec_factor *= attenuation;
-        }
         Colour spec_colour = object->material().specular() * light.intensity();
         colour = colour + spec_colour * spec_factor;
       }
