@@ -40,6 +40,8 @@ float intersectLineseg(const Point& p1, const Point& p2, const Ray& ray)
   float t2;
   bool b1 = pointOn(r_dir, ray.origin(), p1, t1);
   bool b2 = pointOn(r_dir, ray.origin(), p2, t2);
+  t1 /= r_norm;
+  t2 /= r_norm;
   if (b1 && b2) {
     return min(t1, t2);
   } else if (b1 && !b2) {
@@ -64,15 +66,10 @@ float intersectLineseg(const Point& p1, const Point& p2, const Ray& ray)
     return t;
   }
 
-  float t_dummy;
-  Vector pq = q - p1;
-  pq.normalise();
-  if (!pointOn(pq, p1, q, t_dummy)) {
-    return -1;
-  }
-  pq = q - p2;
-  pq.normalise();
-  if (!pointOn(pq, p2, q, t_dummy)) {
+  float t_k;
+  Vector p1_to_p2 = p2 - p1;
+  p1_to_p2.normalise();
+  if (!pointOn(p1_to_p2, p1, q, t_k) || 1 < t_k) {
     return -1;
   }
   return t / r_norm;
@@ -286,13 +283,16 @@ int Polygon::addCrossSign(const Point& p1, const Point& p2, const Point& q)
 
 bool Polygon::pointInside(const Point& q)
 {
-  int bm_sign = addCrossSign(P[N - 1], P[0], q);
-  if (bm_sign != 0) {
-    for (int i = 0; i < N - 1; ++i) {
-      int cmp_sign = addCrossSign(P[i], P[i + 1], q);
-      if (bm_sign * cmp_sign < 0) {
-        return false;
-      }
+  int bm_sign = 0;
+  int i = 0;
+  while (i < N && bm_sign == 0) {
+    bm_sign = addCrossSign(P[i], P[i + 1 < N ? i + 1 : 0], q);
+    ++i;
+  }
+  for (; i < N; ++i) {
+    int cmp_sign = addCrossSign(P[i], P[i + 1 < N ? i + 1 : 0], q);
+    if (bm_sign * cmp_sign < 0) {
+      return false;
     }
   }
   return true;

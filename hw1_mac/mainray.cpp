@@ -74,40 +74,24 @@ void create_window(void)
 /***************************************************************************/
 /* The main function */
 /***************************************************************************/
-// int main(int argc, char **argv)
-// {
-//   /* initialise the window manager library */
-//   glutInit(&argc, argv);
+int main(int argc, char **argv)
+{
+  /* initialise the window manager library */
+  glutInit(&argc, argv);
 
-//   /* set up the camera */
-//   //TheCamera.setResolution(250,250);
-//   TheCamera.setResolution(512, 512);
-//   TheCamera.setVPWindow(-2.0, 2.0, -2.0, 2.0);
-//   TheCamera.zcop() = 2.5;
+  /* set up the camera */
+  //TheCamera.setResolution(250,250);
+  TheCamera.setResolution(512, 512);
+  TheCamera.setVPWindow(-2.0, 2.0, -2.0, 2.0);
+  TheCamera.zcop() = 2.5;
 
-//   /* read the scene from standard input*/
-//   cin >> TheScene;
+  /* read the scene from standard input*/
+  cin >> TheScene;
 
-//   cout << TheScene << "\n";
-//   /* open a window of the specified size */
-//   create_window();
+  cout << TheScene << "\n";
+  /* open a window of the specified size */
+  create_window();
 
-//   /* enter the event loop */
-//   glutMainLoop();
-// }
-
-int main() {
-  Polygon pol;
-  pol.setMaxPoints(4);
-  pol.set(Point(0, 0, 0));
-  pol.set(Point(2, 0, 0));
-  pol.set(Point(2, 2, 1));
-  pol.set(Point(0, 2, 1));
-  pol.planeEquation();
-  Ray ray;
-  ray.origin() = Point(1, -2, -1);
-  ray.direction() = Vector(0, 4, 2);
-  float t;
-  Colour col;
-  cout << pol.intersect(ray, t, col) << " " << t << endl;
+  /* enter the event loop */
+  glutMainLoop();
 }
