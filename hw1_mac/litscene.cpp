@@ -90,6 +90,7 @@ Colour LitScene::colourOnObject(GObject *object, const Point& p, const Point& ey
     }
 
     bool shadow = false;
+    // shadowray origin is already set above.
     shadowray.direction() = light_dir;
     for (int i = 0; i < numObjects(); ++i) {
       float t;
@@ -102,9 +103,10 @@ Colour LitScene::colourOnObject(GObject *object, const Point& p, const Point& ey
 
     if (!shadow) {
       if (!(object->material().diffuse() == Black)) {
-        float diffuse_factor = clamp0to1(n ^ light_dir);
-        Colour diffuse_colour = object->material().diffuse() * light.intensity();
-        colour = colour + diffuse_colour * diffuse_factor;
+        Colour diffuse_colour = 
+            (object->material().diffuse() * light.intensity())
+            * clamp0to1(n ^ light_dir);
+        colour = colour + diffuse_colour;
       }
 
       if (!(object->material().specular() == Black)) {
@@ -112,9 +114,10 @@ Colour LitScene::colourOnObject(GObject *object, const Point& p, const Point& ey
         view_dir.normalise();
         Vector half_dir = add(light_dir, view_dir);
         half_dir.normalise();
-        float spec_factor = pow(clamp0to1(n ^ half_dir), object->material().shininess());
-        Colour spec_colour = object->material().specular() * light.intensity();
-        colour = colour + spec_colour * spec_factor;
+        Colour spec_colour = 
+            object->material().specular() * light.intensity()
+            * pow(clamp0to1(n ^ half_dir), object->material().shininess());
+        colour = colour + spec_colour;
       }
     }
   }

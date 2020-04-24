@@ -14,9 +14,12 @@ bool pointOn(const Vector& r_dir, const Point& r_origin, const Point& p, float& 
       (r_dir.y() != 0 ?
       p_dir.y() / r_dir.y() :
       p_dir.z() / r_dir.z());
-  p_dir.normalise();
+  if (t < 0) {
+    return false;
+  }
 
-  return r_dir == p_dir ? t >= 0 : false;
+  p_dir.normalise();
+  return r_dir == p_dir;
 }
 
 Point add(const Point& p, const Vector& v) {
@@ -50,6 +53,7 @@ float intersectLineseg(const Point& p1, const Point& p2, const Ray& ray)
     return t2;
   }
 
+  // Neither p1, p2 on ray.
   Vector p_sub = p2 - p1;
   Vector o_to_p = p2 - ray.origin();
   float numer = (p_sub * o_to_p).norm();
@@ -62,10 +66,7 @@ float intersectLineseg(const Point& p1, const Point& p2, const Ray& ray)
   }
   float t = numer / denom;
   Point q = add(ray.origin(), r_dir * t);
-  if (q == p1 || q == p2) {
-    return t;
-  }
-
+  
   float t_k;
   Vector p1_to_p2 = p2 - p1;
   p1_to_p2.normalise();
@@ -265,10 +266,6 @@ bool Polygon::intersect(const Ray& ray, float& t, Colour& colour)
   if (t < 0) {
     return false;
   }
-
-  Point q = ray.pointAt(t);
-
-  
   // colour = this->material().ambient();
   return pointInside(ray.pointAt(t));
 }
