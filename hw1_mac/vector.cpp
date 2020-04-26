@@ -88,30 +88,6 @@ istream& operator >> (istream& s, Vector& p)
   return s;
 }
 
-// Vector& operator-(Point& p1, Point& p2)
-// //returns p1 - p2
-// {
-//   Vector* v = new Vector;
-
-//   v->X = p1.x() - p2.x();
-//   v->Y = p1.y() - p2.y();
-//   v->Z = p1.z() - p2.z();
-
-//   return *v;
-// }
-
-// Vector& operator+(Point& p1, Point& p2)
-// //returns p1 + p2
-// {
-//   Vector* v = new Vector;
-
-//   v->X = p1.x() + p2.x();
-//   v->Y = p1.y() + p2.y();
-//   v->Z = p1.z() + p2.z();
-
-//   return *v;
-// }
-
 Vector add(const Vector& p1, const Vector& p2)
 //returns p1 + p2
 {
