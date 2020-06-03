@@ -1,13 +1,3 @@
-/*
-!.gitignore
-!2020_hw1_raytracing_my
-2020_hw1_raytracing_my/*
-!2020_hw1_raytracing_my/*.h
-!2020_hw1_raytracing_my/*.cpp
-!2020_hw1_raytracing_my/*.dat
-!hw1_*
-hw1_*/*
-!hw1_*/*.h
-!hw1_*/*.cpp
-!hw1_*/*.dat
-!hw1_*/*.txt
+**/build
+**/*.vcxproj*
+**/*.pdf
