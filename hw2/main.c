@@ -158,7 +158,7 @@ static int check_bits_per_color(void)
 /*==========================================================================
   main
   ==========================================================================*/
-void main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     TRadParams *params;
 

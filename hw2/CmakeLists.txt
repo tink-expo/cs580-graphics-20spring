@@ -1,0 +1,24 @@
+cmake_minimum_required(VERSION 3.0.0)
+project (hw2_radiosity)
+
+file(GLOB SOURCES "*.c")
+file(GLOB HEADERS "*.h")
+
+set ( CMAKE_CXX_COMPILER "gcc" )
+
+find_package(OpenGL REQUIRED)
+set(GLUT_LIBRARIES libglut.3.dylib)
+set(GLUT_INCLUDE_DIRS /opt/X11/include)
+set(GLUT_LIBRARY_DIRS /opt/X11/lib)
+
+add_compile_options ( "-O2" )
+add_compile_definitions( "GL_SILENCE_DEPRECATION" )
+
+include_directories ( ${OPENGL_INCLUDE_DIRS} ${GLUT_INCLUDE_DIRS} )
+
+link_libraries( ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES} )
+
+link_directories ( ${OPENGL_LIBRARY_DIRS} ${GLUT_LIBRARY_DIRS} )
+
+
+add_executable(radiosity ${SOURCES} ${HEADERS})
