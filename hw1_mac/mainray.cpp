@@ -1,6 +1,4 @@
 #include <GL/freeglut.h>
-#include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
 
 #include "litscene.h"
 #include "simplecamera.h"
@@ -83,7 +81,7 @@ int main(int argc, char **argv)
 
   /* set up the camera */
   //TheCamera.setResolution(250,250);
-  TheCamera.setResolution(700, 700);
+  TheCamera.setResolution(512, 512);
   TheCamera.setVPWindow(-2.0, 2.0, -2.0, 2.0);
   TheCamera.zcop() = 2.5;
 
