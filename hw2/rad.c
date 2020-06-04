@@ -170,8 +170,22 @@ static int FindShootPatch(unsigned long *shootPatch)
 	// CURRENTLY IT ALWAYS RETURNING 0
 
 	double energySum, error, maxEnergySum=0;
-	error = maxEnergySum / totalEnergy;
+
+	for (int i = 0; i < (int) params->nPatches; ++i) {
+		energySum = 0;
+
+		for (int j = 0; j < kNumberOfRadSamples; ++j) {
+			energySum += params->patches[i].unshotRad.samples[j] * 
+					params->patches[i].area;
+		}
+
+		if (energySum > maxEnergySum) {
+			*shootPatch = i;
+			maxEnergySum = energySum;
+		}
+	}
 	
+	error = maxEnergySum / totalEnergy;
 	/* check convergence */
 	if (error < params->threshold)
 		return 0;		/* converged */
@@ -181,7 +195,7 @@ static int FindShootPatch(unsigned long *shootPatch)
 }
 
 /* Find out the index to the delta form-factors array */
-#define Index(i)	((i)<hres? i: (hres-1- ((i)%hres)))
+#define Index(i, hres)	((i)<hres? i: (hres-1- ((i)%hres)))
 
 /* Use the largest 32bit unsigned long for background */
 /* #define kBackgroundItem 0xffffffff */
@@ -211,8 +225,22 @@ int startY
 	if (bits_for_RGB == 24)	current_backItem = kBackgroundItem;
 	else					current_backItem = 65535;			/* 2^16 - 1 */
 
-	memset(formfs, 0.0, sizeof(double) * params->nElements);
+	unsigned long* buf_iter = buf;
+	int hres = xRes / 2;
 
+	for (int y_idx = 0; y_idx < yRes; ++y_idx) {
+		int y_df_idx = Index(y_idx, hres) * hres;
+
+		for (int x_idx = 0; x_idx < xRes; ++x_idx) {
+			++buf_iter;
+			unsigned long buf_val = *buf_iter;
+			if (buf_val != current_backItem) {
+				int x_df_idx = Index(x_idx, hres);
+
+				formfs[buf_val] += deltaFactors[x_df_idx + y_df_idx];
+			}
+		}
+	}
 }
 
 /* Create the delta form-factors for the top face of hemi-cube */
@@ -227,7 +255,23 @@ double* deltaFactors /* output */
 	// SUBTASK(#1) Compute Delta Form-Factors for the top of a hemicube
 	// For all pixels in the top of a hemicube, compute delta form factors. 
 	// The formula is well written in a course material.
-		
+
+	double* out_ptr = deltaFactors;
+
+	for (int y_idx = 0; y_idx < hres; ++y_idx) {
+		double y = 1.0 - (0.5 + y_idx) / hres;
+		double y_sq = y * y;
+
+		for (int x_idx = 0; x_idx < hres; ++x_idx) {
+			double x = 1.0 - (0.5 + x_idx) / hres;
+			double x_sq = x * x;
+
+			double r_sq = x_sq + y_sq + 1;
+
+			*out_ptr = 1.0 / (PI * (r_sq * r_sq) * (hres * hres));
+			++out_ptr;
+		}
+	}
 }
 
 /* Create the delta form-factors for the side face of hemi-cube */
@@ -242,7 +286,22 @@ double* deltaFactors /* output */
 	// SUBTASK(#2) Compute Delta Form-Factors for the side of a hemicube
 	// This is very similar to what you've done in SUBTASK(#1)
 	
-	
+	double* out_ptr = deltaFactors;
+
+	for (int z_idx = 0; z_idx < hres; ++z_idx) {
+		double z = 1.0 - (0.5 + z_idx) / hres;
+		double z_sq = z * z;
+
+		for (int y_idx = 0; y_idx < hres; ++y_idx) {
+			double y = 1.0 - (0.5 + y_idx) / hres;
+			double y_sq = y * y;
+
+			double r_sq = y_sq + z_sq + 1;
+
+			*out_ptr = z / (PI * (r_sq * r_sq) * (hres * hres));
+			++out_ptr;
+		}
+	}
 }
 
 /* Use drand48 instead if it is supported */
@@ -379,6 +438,31 @@ static void DistributeRad(unsigned long shootPatch)
 	//       Send to sp->unshotRad to ep->rad
 	// PSEUDO CODE IS DESCRIBED IN THE COURSE MATERIAL
 	// BEFORE RETURNING THIS FUNCTION, write 'sp->unshotRad = black;'
+
+	TPatch* sp = &(params->patches[shootPatch]);
+	TElement* ep = params->elements;
+	TSpectra delta_rads;
+
+	for (int i = 0; i < params->nElements; ++i) {
+		if (formfactors[i] != 0.0) {
+			for (int j = 0; j < kNumberOfRadSamples; ++j) {
+				delta_rads.samples[j] = 
+						sp->unshotRad.samples[j] * 
+						formfactors[i] *
+						ep->patch->reflectance->samples[j];
+			}
+
+			double ai_aj = ep->area / ep->patch->area;
+			for (int j = 0; j < kNumberOfRadSamples; ++j) {
+				ep->rad.samples[j] += delta_rads.samples[j];
+				ep->patch->unshotRad.samples[j] += delta_rads.samples[j] * ai_aj;
+			}
+		}
+
+		++ep;
+	}
+
+	sp->unshotRad = black;
 }
 
 /* Convert a TSpectra (radiosity) to a TColor32b (rgb color) */
