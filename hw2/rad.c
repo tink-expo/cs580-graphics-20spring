@@ -226,19 +226,19 @@ int startY
 	if (bits_for_RGB == 24)	current_backItem = kBackgroundItem;
 	else					current_backItem = 65535;			/* 2^16 - 1 */
 
-	unsigned long* buf_iter = buf;
+	unsigned long* bufIter = buf;
 	int hres = xRes / 2;
 
-	for (int y_idx = 0; y_idx < yRes; ++y_idx) {
-		int y_df_idx = Index(y_idx, hres) * hres;
+	for (int yIdx = 0; yIdx < yRes; ++yIdx) {
+		int yDfIdx = Index(yIdx, hres) * hres;
 
-		for (int x_idx = 0; x_idx < xRes; ++x_idx) {
-			++buf_iter;
-			unsigned long buf_val = *buf_iter;
-			if (buf_val != current_backItem) {
-				int x_df_idx = Index(x_idx, hres);
+		for (int xIdx = 0; xIdx < xRes; ++xIdx) {
+			++bufIter;
+			unsigned long bufVal = *bufIter;
+			if (bufVal != current_backItem) {
+				int xDfIdx = Index(xIdx, hres);
 
-				formfs[buf_val] += deltaFactors[x_df_idx + y_df_idx];
+				formfs[bufVal] += deltaFactors[xDfIdx + yDfIdx];
 			}
 		}
 	}
@@ -259,17 +259,17 @@ double* deltaFactors /* output */
 
 	double* out_ptr = deltaFactors;
 
-	for (int y_idx = 0; y_idx < hres; ++y_idx) {
-		double y = 1.0 - (0.5 + y_idx) / hres;
-		double y_sq = y * y;
+	for (int yIdx = 0; yIdx < hres; ++yIdx) {
+		double y = 1.0 - (0.5 + yIdx) / hres;
+		double ySq = y * y;
 
-		for (int x_idx = 0; x_idx < hres; ++x_idx) {
-			double x = 1.0 - (0.5 + x_idx) / hres;
-			double x_sq = x * x;
+		for (int xIdx = 0; xIdx < hres; ++xIdx) {
+			double x = 1.0 - (0.5 + xIdx) / hres;
+			double xSq = x * x;
 
-			double r_sq = x_sq + y_sq + 1;
+			double rSq = xSq + ySq + 1;
 
-			*out_ptr = 1.0 / (PI * (r_sq * r_sq) * (hres * hres));
+			*out_ptr = 1.0 / (PI * (rSq * rSq) * (hres * hres));
 			++out_ptr;
 		}
 	}
@@ -293,13 +293,13 @@ double* deltaFactors /* output */
 		double z = 1.0 - (0.5 + z_idx) / hres;
 		double z_sq = z * z;
 
-		for (int y_idx = 0; y_idx < hres; ++y_idx) {
-			double y = 1.0 - (0.5 + y_idx) / hres;
-			double y_sq = y * y;
+		for (int yIdx = 0; yIdx < hres; ++yIdx) {
+			double y = 1.0 - (0.5 + yIdx) / hres;
+			double ySq = y * y;
 
-			double r_sq = y_sq + z_sq + 1;
+			double rSq = ySq + z_sq + 1;
 
-			*out_ptr = z / (PI * (r_sq * r_sq) * (hres * hres));
+			*out_ptr = z / (PI * (rSq * rSq) * (hres * hres));
 			++out_ptr;
 		}
 	}
@@ -443,15 +443,20 @@ static void DistributeRad(unsigned long shootPatch)
 	TPatch* sp = &(params->patches[shootPatch]);
 	TElement* ep = params->elements;
 
-	for (int e_idx = 0; e_idx < params->nElements; ++e_idx, ++ep) {
-		if (formfactors[e_idx] != 0.0) {
-			for (int j = 0; j < kNumberOfRadSamples; ++j) {
-				double delta_rad = 
-						ep->patch->reflectance->samples[j] *
-						sp->unshotRad.samples[j] *
-						formfactors[e_idx];
-				ep->rad.samples[j] += delta_rad;
-				ep->patch->unshotRad.samples[j] += delta_rad * (ep->area / ep->patch->area);
+	for (int jElem = 0; jElem < params->nElements; ++jElem, ++ep) {
+		if (formfactors[jElem] != 0.0) {
+			for (int k = 0; k < kNumberOfRadSamples; ++k) {
+				double delta_rad =
+						ep->patch->reflectance->samples[k] *
+						sp->unshotRad.samples[k] *
+						formfactors[jElem]; 
+						// (Ai / Aj) term included in ComputeFormfactors.
+
+				// Adding to element's individual rad.
+				ep->rad.samples[k] += delta_rad;
+				// Accumulating to element's parent patch's unshot rad. 
+				// => Mult (elem area / parent patch area).
+				ep->patch->unshotRad.samples[k] += delta_rad * (ep->area / ep->patch->area);
 			}
 		}
 	}
@@ -500,19 +505,45 @@ GetAmbient(TSpectra* ambient)
 	// Modify this part, so that correct value can be assigned.
 	// This 'GetAmbient' is called in the function DisplayResults(). 
 	// If the input scene (TQuad) is configured to have ambient, the ambient term will be added when drawing the scene in DisplayResults()
-
-	int k;
-	TSpectra uSum; 
-
-	uSum=black;
-	// Compute the average reflectance (this part should be run only one time.
-
-	// sum (unshot radiosity * area) 
 	
-	// compute ambient 
-	for (k=kNumberOfRadSamples; k--; )
-		ambient->samples[k] = uSum.samples[k];
+	// R == 1 / (1 - avg.ref) == aSum / (aSum - rSum)
 
+	// Compute the average reflectance (this part should be run only one time).
+	static TSpectra arSumSub;
+	static int computeAverageReflectance = 1;
+	if (computeAverageReflectance) {
+		computeAverageReflectance = 0;
+
+		double aSum = 0;
+		TSpectra rSum = black;
+		for (int i = 0; i < params->nPatches; ++i) {
+			aSum += params->patches[i].area;
+			for (int k = 0; k < kNumberOfRadSamples; ++k) {
+				rSum.samples[k] +=
+						params->patches[i].reflectance->samples[k] *
+						params->patches[i].area;
+			}
+		}
+
+		for (int k = 0; k < kNumberOfRadSamples; ++k) {
+			arSumSub.samples[k] = aSum - rSum.samples[k];
+		}
+	}
+
+	// sum (unshot radiosity * area).
+	TSpectra uSum = black;
+	for (int i = 0; i < params->nPatches; ++i) {
+		for (int k = 0; k < kNumberOfRadSamples; ++k) {
+			uSum.samples[k] += 
+					params->patches[i].unshotRad.samples[k] *
+					params->patches[i].area;
+		}
+	}
+
+	// compute ambient.
+	for (int k = 0; k < kNumberOfRadSamples; ++k) {
+		ambient->samples[k] = uSum.samples[k] / arSumSub.samples[k];
+	}
 }
 
 void DisplayResults(TView* view)
