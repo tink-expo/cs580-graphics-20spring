@@ -36,7 +36,7 @@ static void single_iteration(void)
 	glutSetWindow(hemiview->wid);
     if (run_radiosity > 0) {
         done = doOneIteration();
-        printf("number of iterations %d\n", ++number_of_iterations);
+        // printf("number of iterations %d\n", ++number_of_iterations);
 		if (done) 
             run_radiosity = RADIOSITY_FINISHED;
 		else if (run_radiosity == DO_ONE_ITERATION)

@@ -16,6 +16,7 @@
 ******************************************************************************/
 
 #include "rad.h"
+#include <stdio.h>
 
 /* a quadrilateral */
 typedef struct {

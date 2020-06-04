@@ -23,6 +23,7 @@
 
 #include "rad.h"
 #include <math.h>
+#include <stdio.h>
 
 
 #define kMaxPolyPoints	255
@@ -134,7 +135,7 @@ unsigned long shootPatch_n;
 int doOneIteration(void)
 /* does one radiosity iteration only, returns TRUE when finished */
 {	
-
+	// Patch descending order iteration. So find max patch.
     if (FindShootPatch(&shootPatch_n)) 
     {
       
@@ -441,25 +442,18 @@ static void DistributeRad(unsigned long shootPatch)
 
 	TPatch* sp = &(params->patches[shootPatch]);
 	TElement* ep = params->elements;
-	TSpectra delta_rads;
 
-	for (int i = 0; i < params->nElements; ++i) {
-		if (formfactors[i] != 0.0) {
+	for (int e_idx = 0; e_idx < params->nElements; ++e_idx, ++ep) {
+		if (formfactors[e_idx] != 0.0) {
 			for (int j = 0; j < kNumberOfRadSamples; ++j) {
-				delta_rads.samples[j] = 
-						sp->unshotRad.samples[j] * 
-						formfactors[i] *
-						ep->patch->reflectance->samples[j];
-			}
-
-			double ai_aj = ep->area / ep->patch->area;
-			for (int j = 0; j < kNumberOfRadSamples; ++j) {
-				ep->rad.samples[j] += delta_rads.samples[j];
-				ep->patch->unshotRad.samples[j] += delta_rads.samples[j] * ai_aj;
+				double delta_rad = 
+						ep->patch->reflectance->samples[j] *
+						sp->unshotRad.samples[j] *
+						formfactors[e_idx];
+				ep->rad.samples[j] += delta_rad;
+				ep->patch->unshotRad.samples[j] += delta_rad * (ep->area / ep->patch->area);
 			}
 		}
-
-		++ep;
 	}
 
 	sp->unshotRad = black;
