@@ -153,7 +153,7 @@ void UVToXYZ(const TPoint3f quad[4], float u, float v, TPoint3f* xyz)
 	xyz->z = quad[0].z * (1-u)*(1-v) + quad[1].z * (1-u)*v + quad[2].z * u*v + 			quad[3].z * u*(1-v);
 }
 
-#define Index(i, j) ((i)*(nv+1)+(j))
+#define Index(i, j, nv) ((i)*(nv+1)+(j))
 
 int iOffset; 	/* index offset to the point array */
 TPatch* pPatch;
@@ -178,66 +178,78 @@ void MeshQuad(TQuad* quad)
 	// BEFORE FIXING THIS FUNCTION, GO TO InitParams() AND MODIFY THE SIZE OF ARRAYS(DO SUBTASKS FIRST)
 
 	TPoint3f pts[4];
-	int i, j;
-	int nu, nv;
-	double	du, dv;
-	double u, v;
-	int nPts=0;
+	int nPts = 0;
 
 	/* Calculate element vertices(points) */
-	for (i=0; i<4; i++)
+	for (int i = 0; i < 4; ++i)
 	{
 		pts[i] = roomPoints[quad->verts[i]];
 	}
-	nu = nv = quad->patchLevel + 1;
-	du = 1.0 / (nu-1); dv = 1.0 / (nv-1);
-	for (i = 0, u = 0; i < nu; i++, u += du)
-	{
-		for (j = 0, v = 0; j < nv; j++, v += dv, nPts++)
-		{
-			UVToXYZ(pts, u, v, pPoint++);
+	
+	int nu = quad->patchLevel * quad->elementLevel;
+	double du = 1.0 / nu;
+
+	int nv = nu;
+	double dv = du;
+
+	for (int i = 0; i <= nu; ++i) {
+		for (int j = 0; j <= nv; ++j) {
+			UVToXYZ(pts, (float) (i * du), (float) (j * dv), pPoint);
+			++pPoint;
+			++nPts;
 		}
 	}
-	/* Calculate elements and patches */
-	nu = quad->patchLevel; nv=quad->patchLevel;
-	du = 1.0 / nu; dv = 1.0 / nv;
-	for (i = 0, u = du/2.0; i < nu; i++, u += du)
-	{
-		for (j = 0, v = dv/2.0; j < nv; j++, v += dv, pElement++, pPatch++)
-		{
+
+	/* Calculate elements. */
+	for (int i = 0; i < nu; ++i) {
+		for (int j = 0; j < nv; ++j) {
 			pElement->normal = quad->normal;
 			pElement->nVerts = 4;
 			pElement->verts = (unsigned long*)calloc(4, sizeof(unsigned long));
-			pElement->verts[0] = Index(i, j) + iOffset;
-			pElement->verts[1] = Index(i+1, j) + iOffset;
-			pElement->verts[2] = Index(i+1, j+1) + iOffset;
-			pElement->verts[3] = Index(i, j+1) + iOffset;
-			pElement->area = quad->area / (nu*nv);
+			pElement->verts[0] = Index(i, j, nv) + iOffset;
+			pElement->verts[1] = Index(i+1, j, nv) + iOffset;
+			pElement->verts[2] = Index(i+1, j+1, nv) + iOffset;
+			pElement->verts[3] = Index(i, j+1, nv) + iOffset;
+			pElement->area = quad->area / (nu * nv);
 
-			/* find out the parent patch */
-			pElement->patch = pPatch;
+			pElement->patch = pPatch +
+					((int) ((i + 0.5) / nu * quad->patchLevel)) * quad->patchLevel +
+					((int) ((j + 0.5) / nv * quad->patchLevel));
 
-			UVToXYZ(pts, u, v, &pPatch->center);
+			++pElement;
+		}
+	}
+
+	/* Calculate patches. */
+	nu = quad->patchLevel;
+	du = 1.0 / nu;
+
+	nv = nu;
+	dv = du;
+
+	for (int i = 0; i < nu; ++i) {
+		for (int j = 0; j < nv; ++j) {
+			UVToXYZ(pts, (float) ((i + 0.5) * du), (float) ((j + 0.5) * dv), &pPatch->center);
 			pPatch->normal = quad->normal;
 			pPatch->reflectance = quad->reflectance;
 			pPatch->emission = quad->emission;
-			pPatch->area = quad->area / (nu*nv);
+			pPatch->area = quad->area / (nu * nv);
+
+			++pPatch;
 		}
 	}
 
 	iOffset += nPts;
-	
 }
 
 /* Initialize input parameters */
 TRadParams *InitParams(void)
 {
-	int i;
-
 	/* compute the total number of patches */
 	params.nPatches=0;
-	for (i=numberOfPolys; i--; ) 
+	for (int i = 0; i < numberOfPolys; ++i) {
 		params.nPatches += roomPolys[i].patchLevel*roomPolys[i].patchLevel;
+	}
 	params.patches = (TPatch*)calloc(params.nPatches, sizeof(TPatch));
 
 
@@ -249,7 +261,10 @@ TRadParams *InitParams(void)
 
 	/* compute the total number of elements */
 	params.nElements = 0;
-	params.nElements = params.nPatches;
+	for (int i = 0; i < numberOfPolys; ++i) {
+		int nElems1D = roomPolys[i].elementLevel * roomPolys[i].patchLevel;
+		params.nElements += nElems1D * nElems1D;
+	}
 	params.elements = (TElement*)calloc(params.nElements, sizeof(TElement));
 
 
@@ -261,9 +276,9 @@ TRadParams *InitParams(void)
 	// Fix this so that nPoints can count the additional points due to elements.
 	/* compute the total number of element vertices */
 	params.nPoints = 0;
-	for (i=numberOfPolys; i--; )
-	{
-		params.nPoints += (roomPolys[i].patchLevel + 1)*(roomPolys[i].patchLevel + 1);
+	for (int i = 0; i < numberOfPolys; ++i) {
+		int nPts1D = roomPolys[i].elementLevel * roomPolys[i].patchLevel + 1;
+		params.nPoints += nPts1D * nPts1D;
 	}	
 	params.points = (TPoint3f*)calloc(params.nPoints, sizeof(TPoint3f));
 
@@ -272,7 +287,7 @@ TRadParams *InitParams(void)
 	pPatch= params.patches;
 	pElement= params.elements;
 	pPoint= params.points;
-	for (i=0; i<numberOfPolys; i++)
+	for (int i=0; i<numberOfPolys; i++)
 		MeshQuad(&roomPolys[i]);
 	
 	params.displayView.buffer= (IDENTIFIER*)calloc(

@@ -443,13 +443,13 @@ static void DistributeRad(unsigned long shootPatch)
 	TPatch* sp = &(params->patches[shootPatch]);
 	TElement* ep = params->elements;
 
-	for (int jElem = 0; jElem < params->nElements; ++jElem, ++ep) {
-		if (formfactors[jElem] != 0.0) {
+	for (int jq = 0; jq < params->nElements; ++jq, ++ep) {
+		if (formfactors[jq] != 0.0) {
 			for (int k = 0; k < kNumberOfRadSamples; ++k) {
 				double delta_rad =
 						ep->patch->reflectance->samples[k] *
 						sp->unshotRad.samples[k] *
-						formfactors[jElem]; 
+						formfactors[jq]; 
 						// (Ai / Aj) term included in ComputeFormfactors.
 
 				// Adding to element's individual rad.
