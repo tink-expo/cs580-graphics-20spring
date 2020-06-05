@@ -162,9 +162,6 @@ void DrawViewPolygon(int nPts, TPoint3f *pts, TVector3f* n, TColor32b *color)
   // [CS580 GLOBAL ILLUMINATION] 
   // TASK#5 Smoothening
   // You better understand this function
-    if (radiosityDone) {
-        glShadeModel(GL_SMOOTH);
-    }
     int i;
 	glColor3ub(color->r, color->g, color->b); //[min]
 	

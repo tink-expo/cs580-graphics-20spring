@@ -27,6 +27,10 @@ extern GLint bits_for_RGB;
 typedef struct { float x, y, z; } TPoint3f;
 typedef TPoint3f TVector3f;
 typedef struct { unsigned char a, r, g, b;} TColor32b;
+typedef struct { 
+	int r, g, b;
+	int count; 
+} TColorSum;
 
 typedef struct {
 	double samples[kNumberOfRadSamples];
@@ -50,7 +54,6 @@ typedef struct {
 	TPatch* patch;	/* pointer to the parent patch */
 
 	TColor32b color;
-	TColor32b* vertColors;
 } TElement;
 
 typedef struct {
@@ -71,16 +74,19 @@ typedef struct {
 	TPatch *patches;	/* patches */
 	unsigned long nElements; /* number of elements */
 	TElement *elements;	/* elements */
+
 	unsigned long nPoints;	/* number of element vertices */
 	TPoint3f *points;	/* element vertices */
+	TColorSum *pointColorSums;
+
 	TView displayView;	/* view to display the results */
 	unsigned short hemicubeRes; /* hemi-cube resolution */
 	float worldSize;	/* approximate diameter of the bounding sphere of the world.  			used for placing near and far planes in the hemi-cube computation*/
 	float intensityScale;	/* used to scale intensity for display */
 	int	addAmbient;		/* whether or not to add the ambient approximation in display */
 
-	unsigned long nQuads;
-	unsigned long* quadElemDim;
+	int nQuads;
+	int* quadElemDim;
 } TRadParams;
 
 
@@ -141,8 +147,6 @@ extern void DisplayResults(TView* view);
 //extern void createBothWindows(TView* displayview, TView* hemiview);
 
 extern int part_of_id;
-
-int radiosityDone;
 
 
 #endif /* __RAD__ */

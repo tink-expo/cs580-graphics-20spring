@@ -61,6 +61,8 @@ static void DrawHCElement(TElement* ep, IDENTIFIER color);
 static void DrawViewElement(TElement* ep, TColor32b *colour);
 static TColor32b SpectraToRGB(TSpectra* spectra);
 
+int radiosityDone;
+
 /* Initialize radiosity based on the input parameters p */
 void InitRad(TRadParams *p, TView **displayview, TView **hemiview)
 {
@@ -554,14 +556,14 @@ void DisplayResults(TView* view)
 	// TASK#5 Smoothening
 	// You better understand this function
 
-	unsigned long i;
 	register TElement* ep;
 	TSpectra ambient;
 	GetAmbient(&ambient);
 	
 	BeginViewDraw(view, 0);
 	ep = params->elements;
-	for (i=0; i< params->nElements; i++, ep++) {
+	for (int i=0; i< params->nElements; i++, ep++) {
+		TColor32b	c;
 		TSpectra  s;
 		int k;
 		/* add ambient approximation */
@@ -572,15 +574,29 @@ void DisplayResults(TView* view)
 			for (k=kNumberOfRadSamples; k--; )
 				s.samples[k] = ep->rad.samples[k] * params->intensityScale;
 		}
-
+		/* quantize color */
 		ep->color = SpectraToRGB(&s);
 	}
 
 	if (radiosityDone) {
-		
+		// for (int q = 0; q < params->nQuads; ++q) {
+		// 	int qDim = params->quadElemDim[q];
+
+		// 	for (int i = 0; i < qDim; ++i) {
+		// 		for (int j = 0; j < qDim; ++j) {
+
+		// 		}
+		// 	}
+		// }
+		ep = params->elements;
+		for (int i = 0; i < params->nElements; ++i, ++ep) {
+			for (int v = 0; v < ep->nVerts; ++v) {
+				
+			}
+		}
 	} else {
 		ep = params->elements;
-		for (i=0; i< params->nElements; i++, ep++) {
+		for (int i=0; i< params->nElements; i++, ep++) {
 			DrawViewElement(ep, &ep->color);
 		}
 	}

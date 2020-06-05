@@ -205,7 +205,7 @@ void MeshQuad(int quadIdx)
 		for (int j = 0; j < nv; ++j, ++pElement) {
 			pElement->normal = quad->normal;
 			pElement->nVerts = 4;
-			pElement->verts = (unsigned long*)calloc(4, sizeof(unsigned long));
+			pElement->verts = (unsigned long*)calloc(pElement->nVerts, sizeof(unsigned long));
 			pElement->verts[0] = Index(i, j, nv) + iOffset;
 			pElement->verts[1] = Index(i+1, j, nv) + iOffset;
 			pElement->verts[2] = Index(i+1, j+1, nv) + iOffset;
@@ -285,7 +285,7 @@ TRadParams *InitParams(void)
 	pPoint= params.points;
 
 	params.nQuads = numberOfPolys;
-	params.quadElemDim = (unsigned long*) calloc(numberOfPolys, sizeof(unsigned long));
+	params.quadElemDim = (int*) calloc(numberOfPolys, sizeof(int));
 
 	for (int i=0; i<numberOfPolys; i++)
 		MeshQuad(i);
