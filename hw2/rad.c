@@ -61,7 +61,7 @@ static void DrawHCElement(TElement* ep, IDENTIFIER color);
 static void DrawViewElement(TElement* ep, TColor32b *colour);
 static TColor32b SpectraToRGB(TSpectra* spectra);
 
-int radiosityDone;
+const int kSmooth = 1;
 
 /* Initialize radiosity based on the input parameters p */
 void InitRad(TRadParams *p, TView **displayview, TView **hemiview)
@@ -113,8 +113,6 @@ void InitRad(TRadParams *p, TView **displayview, TView **hemiview)
             /* YIORGOS' EXTRA CODE */
         *displayview = &params->displayView;
         *hemiview = &hemicube.view;
-
-	radiosityDone = 0;
 }
 
 /* Main iterative loop */
@@ -147,7 +145,6 @@ int doOneIteration(void)
         return 0; /*FALSE */
     } else {
         printf("Radiosity done \n");
-		radiosityDone = 1;
         return 1; /* TRUE */
     }
 
@@ -239,7 +236,7 @@ int startY
 		for (int xIdx = 0; xIdx < xRes; ++xIdx) {
 			++bufIter;
 			unsigned long bufVal = *bufIter;
-			if (bufVal != current_backItem) {
+			if (bufVal < current_backItem) {
 				int xDfIdx = Index(xIdx, hres);
 
 				formfs[bufVal] += deltaFactors[xDfIdx + yDfIdx];
@@ -293,15 +290,15 @@ double* deltaFactors /* output */
 	
 	double* out_ptr = deltaFactors;
 
-	for (int z_idx = 0; z_idx < hres; ++z_idx) {
-		double z = 1.0 - (0.5 + z_idx) / hres;
-		double z_sq = z * z;
+	for (int zIdx = 0; zIdx < hres; ++zIdx) {
+		double z = 1.0 - (0.5 + zIdx) / hres;
+		double zSq = z * z;
 
 		for (int yIdx = 0; yIdx < hres; ++yIdx) {
 			double y = 1.0 - (0.5 + yIdx) / hres;
 			double ySq = y * y;
 
-			double rSq = ySq + z_sq + 1;
+			double rSq = ySq + zSq + 1;
 
 			*out_ptr = z / (PI * (rSq * rSq) * (hres * hres));
 			++out_ptr;
@@ -547,6 +544,7 @@ GetAmbient(TSpectra* ambient)
 	// compute ambient.
 	for (int k = 0; k < kNumberOfRadSamples; ++k) {
 		ambient->samples[k] = uSum.samples[k] / arSumSub.samples[k];
+		ambient->samples[k] = 0;
 	}
 }
 
@@ -578,7 +576,7 @@ void DisplayResults(TView* view)
 		ep->color = SpectraToRGB(&s);
 	}
 
-	if (radiosityDone) {
+	if (kSmooth) {
 		ep = params->elements;
 		for (int i = 0; i < params->nElements; ++i, ++ep) {
 			for (int v = 0; v < ep->nVerts; ++v) {
