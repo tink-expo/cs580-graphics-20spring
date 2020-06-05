@@ -1,3 +1,4 @@
 **/build
 **/*.vcxproj*
 **/*.pdf
+**.DS_Store

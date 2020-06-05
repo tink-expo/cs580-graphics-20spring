@@ -48,6 +48,9 @@ typedef struct {
 	TSpectra rad;	/* total radiosity of the element */
 	double area;	/* area of the patch */
 	TPatch* patch;	/* pointer to the parent patch */
+
+	TColor32b color;
+	TColor32b* vertColors;
 } TElement;
 
 typedef struct {
@@ -75,6 +78,9 @@ typedef struct {
 	float worldSize;	/* approximate diameter of the bounding sphere of the world.  			used for placing near and far planes in the hemi-cube computation*/
 	float intensityScale;	/* used to scale intensity for display */
 	int	addAmbient;		/* whether or not to add the ambient approximation in display */
+
+	unsigned long nQuads;
+	unsigned long* quadElemDim;
 } TRadParams;
 
 
@@ -136,7 +142,7 @@ extern void DisplayResults(TView* view);
 
 extern int part_of_id;
 
-
+int radiosityDone;
 
 
 #endif /* __RAD__ */

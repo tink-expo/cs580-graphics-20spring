@@ -61,7 +61,6 @@ static void DrawHCElement(TElement* ep, IDENTIFIER color);
 static void DrawViewElement(TElement* ep, TColor32b *colour);
 static TColor32b SpectraToRGB(TSpectra* spectra);
 
-
 /* Initialize radiosity based on the input parameters p */
 void InitRad(TRadParams *p, TView **displayview, TView **hemiview)
 {
@@ -112,6 +111,8 @@ void InitRad(TRadParams *p, TView **displayview, TView **hemiview)
             /* YIORGOS' EXTRA CODE */
         *displayview = &params->displayView;
         *hemiview = &hemicube.view;
+
+	radiosityDone = 0;
 }
 
 /* Main iterative loop */
@@ -144,6 +145,7 @@ int doOneIteration(void)
         return 0; /*FALSE */
     } else {
         printf("Radiosity done \n");
+		radiosityDone = 1;
         return 1; /* TRUE */
     }
 
@@ -560,7 +562,6 @@ void DisplayResults(TView* view)
 	BeginViewDraw(view, 0);
 	ep = params->elements;
 	for (i=0; i< params->nElements; i++, ep++) {
-		TColor32b	c;
 		TSpectra  s;
 		int k;
 		/* add ambient approximation */
@@ -571,13 +572,20 @@ void DisplayResults(TView* view)
 			for (k=kNumberOfRadSamples; k--; )
 				s.samples[k] = ep->rad.samples[k] * params->intensityScale;
 		}
-		/* quantize color */
-		c = SpectraToRGB(&s);
-		DrawViewElement(ep, &c);
+
+		ep->color = SpectraToRGB(&s);
+	}
+
+	if (radiosityDone) {
+		
+	} else {
+		ep = params->elements;
+		for (i=0; i< params->nElements; i++, ep++) {
+			DrawViewElement(ep, &ep->color);
+		}
 	}
 			
 	EndViewDraw();
-
 }
 
 static void
