@@ -77,7 +77,6 @@ typedef struct {
 
 	unsigned long nPoints;	/* number of element vertices */
 	TPoint3f *points;	/* element vertices */
-	TColorSum *pointColorSums;
 
 	TView displayView;	/* view to display the results */
 	unsigned short hemicubeRes; /* hemi-cube resolution */
@@ -85,8 +84,7 @@ typedef struct {
 	float intensityScale;	/* used to scale intensity for display */
 	int	addAmbient;		/* whether or not to add the ambient approximation in display */
 
-	int nQuads;
-	int* quadElemDim;
+	TColorSum *pointColorSums;
 } TRadParams;
 
 
@@ -129,6 +127,12 @@ int nPts, /* number of points in the polygon */
 TPoint3f *pts, /* points of the polygon */
 TVector3f* normal, /* normal of the polygon */
 TColor32b *color  /* color to be drawn with */
+);
+
+extern void DrawViewElementInterp(
+TElement* ep,
+TPoint3f* points,
+TColorSum* pointColorSums
 );
 
 /* Finish the drawing of polygons to the frame buffer*/

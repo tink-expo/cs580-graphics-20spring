@@ -150,7 +150,6 @@ void BeginViewDraw(TView *view, TColor32b *color)
     gluLookAt(view->camera.x, view->camera.y, view->camera.z,
               view->lookat.x, view->lookat.y, view->lookat.z, 
 	      view->up.x, view->up.y, view->up.z);
-    // glShadeModel(GL_SMOOTH);
 
 }
 
@@ -173,6 +172,26 @@ void DrawViewPolygon(int nPts, TPoint3f *pts, TVector3f* n, TColor32b *color)
 		i--;
 
 	}while ( i >= 0);
+
+    glEnd();
+}
+
+void DrawViewElementInterp(TElement* ep, TPoint3f* points, TColorSum* pointColorSums)
+{
+    glShadeModel(GL_SMOOTH);
+
+    glBegin(GL_POLYGON);
+
+    for (int v = ep->nVerts - 1; v >= 0; --v) {
+        int pointIdx = ep->verts[v];
+
+        TColorSum* colorSum = pointColorSums + pointIdx;
+        int count = colorSum->count;
+        glColor3ub(colorSum->r / count, colorSum->g / count, colorSum->b / count);
+
+        TPoint3f* pt = points + pointIdx;
+        glVertex3f(pt->x, pt->y, pt->z);
+    }
 
     glEnd();
 }

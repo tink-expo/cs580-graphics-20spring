@@ -162,7 +162,7 @@ TPoint3f* pPoint;
 
 /* Mesh a quadrilateral into patches and elements */
 /* Output goes to pPatch, pElement, pPoint */
-void MeshQuad(int quadIdx)
+void MeshQuad(TQuad* quad)
 {
 	// [CS580 GLOBAL ILLUMINATION] YOUR CODE HERE
 	// TASK#4 Substructuring 
@@ -176,8 +176,7 @@ void MeshQuad(int quadIdx)
 	// "A surface(TQuad) consists of number of patches(TPatch), but the patch consists of just an element(TElement) having the same area to it"
 	// Therefore, divide each patch into many elements with smaller size.
 	// BEFORE FIXING THIS FUNCTION, GO TO InitParams() AND MODIFY THE SIZE OF ARRAYS(DO SUBTASKS FIRST)
-	TQuad* quad = &roomPolys[quadIdx];
-	params.quadElemDim[quadIdx] = quad->patchLevel * quad->elementLevel;
+
 	TPoint3f pts[4];
 	int nPts = 0;
 
@@ -277,6 +276,7 @@ TRadParams *InitParams(void)
 		params.nPoints += nPts1D * nPts1D;
 	}	
 	params.points = (TPoint3f*)calloc(params.nPoints, sizeof(TPoint3f));
+	params.pointColorSums = (TColorSum*)calloc(params.nPoints, sizeof(TColorSum));
 
 	/* mesh the room to patches and elements */
 	iOffset = 0;
@@ -284,11 +284,8 @@ TRadParams *InitParams(void)
 	pElement= params.elements;
 	pPoint= params.points;
 
-	params.nQuads = numberOfPolys;
-	params.quadElemDim = (int*) calloc(numberOfPolys, sizeof(int));
-
 	for (int i=0; i<numberOfPolys; i++)
-		MeshQuad(i);
+		MeshQuad(&roomPolys[i]);
 	
 	params.displayView.buffer= (IDENTIFIER*)calloc(
 		params.displayView.xRes*params.displayView.yRes, sizeof(IDENTIFIER));

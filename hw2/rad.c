@@ -579,21 +579,21 @@ void DisplayResults(TView* view)
 	}
 
 	if (radiosityDone) {
-		// for (int q = 0; q < params->nQuads; ++q) {
-		// 	int qDim = params->quadElemDim[q];
-
-		// 	for (int i = 0; i < qDim; ++i) {
-		// 		for (int j = 0; j < qDim; ++j) {
-
-		// 		}
-		// 	}
-		// }
 		ep = params->elements;
 		for (int i = 0; i < params->nElements; ++i, ++ep) {
 			for (int v = 0; v < ep->nVerts; ++v) {
-				
+				TColorSum* colorSum = &params->pointColorSums[ep->verts[v]];
+				colorSum->r += ep->color.r;
+				colorSum->g += ep->color.g;
+				colorSum->b += ep->color.b;
+				colorSum->count += 1;
 			}
 		}
+		ep = params->elements;
+		for (int i = 0; i < params->nElements; ++i, ++ep) {
+			DrawViewElementInterp(ep, params->points, params->pointColorSums);
+		}
+
 	} else {
 		ep = params->elements;
 		for (int i=0; i< params->nElements; i++, ep++) {
