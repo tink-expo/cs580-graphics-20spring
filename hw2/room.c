@@ -193,16 +193,15 @@ void MeshQuad(TQuad* quad)
 	double dv = du;
 
 	for (int i = 0; i <= nu; ++i) {
-		for (int j = 0; j <= nv; ++j) {
-			UVToXYZ(pts, (float) (i * du), (float) (j * dv), pPoint);
-			++pPoint;
+		for (int j = 0; j <= nv; ++j, ++pPoint) {
 			++nPts;
+			UVToXYZ(pts, (float) (i * du), (float) (j * dv), pPoint);
 		}
 	}
 
 	/* Calculate elements. */
 	for (int i = 0; i < nu; ++i) {
-		for (int j = 0; j < nv; ++j) {
+		for (int j = 0; j < nv; ++j, ++pElement) {
 			pElement->normal = quad->normal;
 			pElement->nVerts = 4;
 			pElement->verts = (unsigned long*)calloc(4, sizeof(unsigned long));
@@ -215,8 +214,6 @@ void MeshQuad(TQuad* quad)
 			pElement->patch = pPatch +
 					((int) ((i + 0.5) / nu * quad->patchLevel)) * quad->patchLevel +
 					((int) ((j + 0.5) / nv * quad->patchLevel));
-
-			++pElement;
 		}
 	}
 
@@ -228,14 +225,12 @@ void MeshQuad(TQuad* quad)
 	dv = du;
 
 	for (int i = 0; i < nu; ++i) {
-		for (int j = 0; j < nv; ++j) {
+		for (int j = 0; j < nv; ++j, ++pPatch) {
 			UVToXYZ(pts, (float) ((i + 0.5) * du), (float) ((j + 0.5) * dv), &pPatch->center);
 			pPatch->normal = quad->normal;
 			pPatch->reflectance = quad->reflectance;
 			pPatch->emission = quad->emission;
 			pPatch->area = quad->area / (nu * nv);
-
-			++pPatch;
 		}
 	}
 
