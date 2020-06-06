@@ -162,7 +162,6 @@ static int check_bits_per_color(void)
   ==========================================================================*/
 int main(int argc, char *argv[])
 {
-    run_radiosity = RUN;
     
     TRadParams *params;
 

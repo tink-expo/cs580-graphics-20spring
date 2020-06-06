@@ -544,7 +544,6 @@ GetAmbient(TSpectra* ambient)
 	// compute ambient.
 	for (int k = 0; k < kNumberOfRadSamples; ++k) {
 		ambient->samples[k] = uSum.samples[k] / arSumSub.samples[k];
-		ambient->samples[k] = 0;
 	}
 }
 
