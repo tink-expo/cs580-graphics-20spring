@@ -37,10 +37,8 @@ static void single_iteration(void)
     if (run_radiosity > 0) {
         done = doOneIteration();
         printf("number of iterations %d\n", ++number_of_iterations);
-		if (done) {
+		if (done) 
             run_radiosity = RADIOSITY_FINISHED;
-            printf("%d\n", number_of_iterations);
-        }
 		else if (run_radiosity == DO_ONE_ITERATION)
             run_radiosity = PAUSE;
 		//[Min] for debug
@@ -160,9 +158,8 @@ static int check_bits_per_color(void)
 /*==========================================================================
   main
   ==========================================================================*/
-int main(int argc, char *argv[])
+void main(int argc, char *argv[])
 {
-    
     TRadParams *params;
 
 	    /* don't show back facing polygons when rendering */
