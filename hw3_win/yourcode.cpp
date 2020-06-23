@@ -257,20 +257,25 @@ Colour LitScene::tracePath(const Ray& ray, GObject* object, Colour weightIn, int
 	{
 		GObject* areaLight = areaLightAt(i);
 		float probability;
+		Point syp;
+		areaLight->sample(syp, probability, ixp, Lamda1, Lamda2);
+
+		Vector xyRayDir = (syp - ixp).normalised();
+
 		Point iyp;
-		areaLight->sample(iyp, probability, ixp, Lamda1, Lamda2);
+		Vector yNormal;
+		GObject* yObject = intersect(Ray(ixp, xyRayDir), iyp, yNormal);
+		if (yObject == areaLight)
+		{
+			float cos_x_phi = normal ^ xyRayDir;
+			float cos_y_nphi = yNormal ^ xyRayDir.invert();
+			float r_sq = (ixp - syp).squarednorm();
+			float geo_term = cos_x_phi * cos_y_nphi / r_sq;
 
-		Vector xyRayDir = (iyp - ixp).normalised();
-		Vector yNormal = areaLight->normal(iyp);
-
-		float cos_x_phi = normal ^ xyRayDir;
-		float cos_y_nphi = yNormal ^ xyRayDir.invert();
-		float r_sq = (ixp - iyp).squarednorm();
-		float geo_term = cos_x_phi * cos_y_nphi / r_sq;
-
-		colorAdd = colorAdd +
-				areaLight->material().emission() * hitObject->brdf()->brdf(
-				ixp, ray.direction().normalised(), xyRayDir, normal, Lamda1) * geo_term;
+			colorAdd = colorAdd +
+					areaLight->material().emission() * hitObject->brdf()->brdf(
+					ixp, ray.direction().normalised(), xyRayDir, normal, Lamda1) * geo_term;
+		}
 	}
 
     // Indirect illumination
