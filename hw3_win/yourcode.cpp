@@ -25,7 +25,9 @@ Ray SimpleCamera::StratifiedRandomRay(int i, int j, int k, int l, double offset)
 	//Currently, we only sample a fixed point per a pixel. 
 	//Implement the stratification and jittering technique in order to generate smooth shadow as shown in Figure 1.
 
-	Point pixel_pos(Xmin + i * Width, Ymin + j * Height, 2.0);
+	float lambda1 = frand() - 0.5f;
+	float lambda2 = frand() - 0.5f;
+	Point pixel_pos(Xmin + (i + lambda1) * Width, Ymin + (j + lambda2)  * Height, 2.0);
 
 	Ray ray;
 	Point cop(0.0, 0.0, Zcop);
@@ -45,7 +47,11 @@ Colour LitScene::renderPixel(int i, int j, SimpleCamera& TheCamera, int N_RAYS_P
 	// (i,j): pixel location
 	// You need to shoot N_RAYS_PER_PIXEL rays for a pixel (i,j) with the StratifiedRandomRay function, which you already implemented in SUBTASK(#1).
 
-	Colour col = tracePath(TheCamera.StratifiedRandomRay(i, j, 0, 0, 0));
+	Colour col(0, 0, 0);
+	for (int n = 0; n < N_RAYS_PER_PIXEL; ++n) 
+	{
+		col = col + tracePath(TheCamera.StratifiedRandomRay(i, j, 0, 0, 0)) / (float) N_RAYS_PER_PIXEL;
+	}
 	return col;
 }
 
