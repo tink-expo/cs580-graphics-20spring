@@ -213,7 +213,7 @@ Ray phongBRDF::reflection(	  const Ray& incoming,	// incoming ray
 
 Colour LitScene::tracePath(const Ray& ray, GObject* object, Colour weightIn, int depth)
 {
-    float Lamda1 = frand(), Lamda2 = frand();   // random variables in cannonical 2d space in range of [0..1]
+	float Lamda1 = frand(), Lamda2 = frand();   // random variables in cannonical 2d space in range of [0..1]
 
     Colour colourOut(0,0,0);
 
@@ -251,7 +251,27 @@ Colour LitScene::tracePath(const Ray& ray, GObject* object, Colour weightIn, int
 	//==================================================
 	// Direct illumination
 
-    Colour colorAdd = Colour(0.,0.,0.);
+	Colour colorAdd(0, 0, 0);
+
+	for (int i = 0; i < numberOfAreaLights(); ++i) 
+	{
+		GObject* areaLight = areaLightAt(i);
+		float probability;
+		Point iyp;
+		areaLight->sample(iyp, probability, ixp, Lamda1, Lamda2);
+
+		Vector xyRayDir = (iyp - ixp).normalised();
+		Vector yNormal = areaLight->normal(iyp);
+
+		float cos_x_phi = normal ^ xyRayDir;
+		float cos_y_nphi = yNormal ^ xyRayDir.invert();
+		float r_sq = (ixp - iyp).squarednorm();
+		float geo_term = cos_x_phi * cos_y_nphi / r_sq;
+
+		colorAdd = colorAdd +
+				areaLight->material().emission() * hitObject->brdf()->brdf(
+				ixp, ray.direction().normalised(), xyRayDir, normal, Lamda1) * geo_term;
+	}
 
     // Indirect illumination
     // [CS580 GLOBAL ILLUMINATION] YOUR CODE HERE

@@ -14,6 +14,7 @@
 #include "simplecamera.h"
 #include "brdf.h"
 #include "sphere.h"
+#include "direct.h"
 
 // Debugging Info ---
 const char* friendlyTime(char time[9],double tsecs);
@@ -236,14 +237,19 @@ int main(int argc, char **argv)
 	TheCamera.setVPWindow(-2.0f,2.0f,-2.0f,2.0f);
 	TheCamera.zcop() =(2.0f+6.0f);
 
-	if (argc<2)
-	{
-		usage();
-		return 1;
-	}
-	if (!TheScene.load(argv[1])) return 1;
+	char* arg_filename;
 
-	strcpy(filename,argv[1]);
+	if (argc<2) 
+	{
+		arg_filename = "../data/Cornell_TriLight.dat";
+	}
+	else 
+	{
+		arg_filename = argv[1];
+	}
+	if (!TheScene.load(arg_filename)) return 1;
+
+	strcpy(filename, arg_filename);
 
 	// open a window of the specified size
 	create_window();
