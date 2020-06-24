@@ -71,15 +71,11 @@ float Polygon::TriangularSampling(Point& p, float s, float t, int Type = 0)
     // s and t are the coefficients for sampling. 
     // You can ignore the type parameter. 
     // Return value is the pdf for the p.
-	if (s + t > 1)
-	{
-		s = 1 - s;
-		t = 1 - t;
-	}
 	Vector P01 = P[1] - P[0];
 	Vector P02 = P[2] - P[0];
-	p = P[0] + P01 * s + P02 * t;
-	float pdf = 1.0 / ((P01 * P02).norm() / 2.0);
+	float sqrt_1ms = sqrt(1 - s);
+	p = P[0] + P01 * t * sqrt_1ms + P02 * (1 - sqrt_1ms);
+	float pdf = 2.0 / (P01 * P02).norm();
 	return pdf;
 }
 
@@ -113,9 +109,16 @@ bool Sphere::sample(Point& p, float& probability, const Point& from, float s, fl
 	// s and t are the coefficients for sampling. probability is the pdf for the p. 
 	// from is the intersection point of a ray with an intersection object. 
 	// *Reference: Section 3.2 ¡®Sampling Spherical Luminaries¡¯ in ¡°Monte Carlo Techniques for Direct Lighting Calculations,¡± ACM Transactions on Graphics, 1996
+	s = frand();
+	t = frand();
+	p.x() = Centre.x() + 2 * Radius * cos(2 * PI * t) * sqrt(s * (1 - s));
+	p.y() = Centre.y() + 2 * Radius * sin(2 * PI * t) * sqrt(s * (1 - s));
+	p.z() = Centre.z() + Radius * (1 - 2 * s);
 
-	probability = 1;
-	p = (*this).Centre;
+	float numer = (from - p).normalised() ^ (p - Centre).normalised();
+	float denom = 2 * PI * (from - p).squarednorm() *
+			(1 - sqrt(1 - pow(Radius / (from - Centre).norm(), 2)));
+	probability = numer / denom;
 
 	return true;
 }
@@ -262,27 +265,35 @@ Colour LitScene::tracePath(const Ray& ray, GObject* object, Colour weightIn, int
 	for (int i = 0; i < numberOfAreaLights(); ++i) 
 	{
 		GObject* areaLight = areaLightAt(i);
-		float probability;
+		float probability = 0;
 		Point syp;
-		areaLight->sample(syp, probability, ixp, Lamda1, Lamda2);
 
-		Vector xyRayDir = (syp - ixp).normalised();
+		int count = 0;
+		while (probability <= 0 && count < 100) {
+			areaLight->sample(syp, probability, ixp, Lamda1, Lamda2);
+			++count;
+		}
 
-		Point iyp;
-		Vector yNormal;
-		GObject* yObject = intersect(Ray(ixp, xyRayDir), iyp, yNormal);
-		if (yObject == areaLight)
+		if (probability > 0)
 		{
-			float cos_x_phi = normal ^ xyRayDir;
-			float cos_y_nphi = yNormal ^ xyRayDir.invert();
-			float r_sq = (ixp - syp).squarednorm();  // syp? iyp?
-			float geo_term = cos_x_phi * cos_y_nphi / r_sq;
+			Vector xyRayDir = (syp - ixp).normalised();
 
-			colorAdd = colorAdd +
-					areaLight->material().emission() * 
-					hitObject->brdf()->brdf(ixp, ray.direction().normalised(), xyRayDir, normal, Lamda1) * 
+			Point iyp;
+			Vector yNormal;
+			GObject* yObject = intersect(Ray(ixp, xyRayDir), iyp, yNormal);
+			if (yObject == areaLight)
+			{
+				float cos_x_phi = normal ^ xyRayDir;
+				float cos_y_nphi = yNormal ^ xyRayDir.invert();
+				float r_sq = (ixp - syp).squarednorm();  // syp? iyp?
+				float geo_term = cos_x_phi * cos_y_nphi / r_sq;
+
+				colorAdd = colorAdd +
+					areaLight->material().emission() *
+					hitObject->brdf()->brdf(ixp, ray.direction().normalised(), xyRayDir, normal, Lamda1) *
 					geo_term /
 					probability;
+			}
 		}
 	}
 
