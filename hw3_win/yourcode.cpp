@@ -70,14 +70,16 @@ float Polygon::TriangularSampling(Point& p, float s, float t, int Type = 0)
     // p is the sampled position of the light source. 
     // s and t are the coefficients for sampling. 
     // You can ignore the type parameter. 
-    // Return value is the pdf for the p. 
-
-	float x = (P[0].x() + P[1].x() + P[2].x()) / 3.0f;
-	float y = (P[0].y() + P[1].y() + P[2].y()) / 3.0f;
-	float z = (P[0].z() + P[1].z() + P[2].z()) / 3.0f;
-
-	p = Point(x, y, z);
-	float pdf = 1.0;
+    // Return value is the pdf for the p.
+	if (s + t > 1)
+	{
+		s = 1 - s;
+		t = 1 - t;
+	}
+	Vector P01 = P[1] - P[0];
+	Vector P02 = P[2] - P[0];
+	p = P[0] + P01 * s + P02 * t;
+	float pdf = 1.0 / ((P01 * P02).norm() / 2.0);
 	return pdf;
 }
 
@@ -93,12 +95,10 @@ float Polygon::RectangularSampling(Point& p, float s, float t, int Type = 0)
 	// You can ignore the type parameter. 
 	// Return value is the pdf for the p.
 
-	float x = (P[0].x() + P[1].x() + P[2].x() + P[3].x()) / 4.0f;
-	float y = (P[0].y() + P[1].y() + P[2].y() + P[3].y()) / 4.0f;
-	float z = (P[0].z() + P[1].z() + P[2].z() + P[3].z()) / 4.0f;
-
-	p = Point(x, y, z);
-	float pdf = 1;
+	Vector P01 = P[1] - P[0];
+	Vector P03 = P[3] - P[0];
+	p = P[0] + P01 * s + P03 * t;
+	float pdf = 1.0 / (P01 * P03).norm();
 	return pdf;
 }
 
@@ -275,12 +275,14 @@ Colour LitScene::tracePath(const Ray& ray, GObject* object, Colour weightIn, int
 		{
 			float cos_x_phi = normal ^ xyRayDir;
 			float cos_y_nphi = yNormal ^ xyRayDir.invert();
-			float r_sq = (ixp - syp).squarednorm();
+			float r_sq = (ixp - syp).squarednorm();  // syp? iyp?
 			float geo_term = cos_x_phi * cos_y_nphi / r_sq;
 
 			colorAdd = colorAdd +
-					areaLight->material().emission() * hitObject->brdf()->brdf(
-					ixp, ray.direction().normalised(), xyRayDir, normal, Lamda1) * geo_term;
+					areaLight->material().emission() * 
+					hitObject->brdf()->brdf(ixp, ray.direction().normalised(), xyRayDir, normal, Lamda1) * 
+					geo_term /
+					probability;
 		}
 	}
 

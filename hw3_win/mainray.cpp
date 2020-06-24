@@ -170,13 +170,13 @@ void display(void)
 	glDrawPixels(Nx,Ny,GL_RGB,GL_FLOAT,raytraceBuffer);	// set pixels from buffer to screen
 	glFlush();
 
-	if( done )
-	{
-		// output frame buffer to image
-		char output[64];
-		sprintf( output, "armacw1%ld.bmp", time( NULL ) );
-		screenshot( xSZ, ySZ, output );
-	}
+	//if( done )
+	//{
+	//	// output frame buffer to image
+	//	char output[64];
+	//	sprintf( output, "armacw1%ld.bmp", time( NULL ) );
+	//	screenshot( xSZ, ySZ, output );
+	//}
 }
 
 void glutResize(int w, int h)
