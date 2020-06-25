@@ -109,8 +109,6 @@ bool Sphere::sample(Point& p, float& probability, const Point& from, float s, fl
 	// s and t are the coefficients for sampling. probability is the pdf for the p. 
 	// from is the intersection point of a ray with an intersection object. 
 	// *Reference: Section 3.2 ¡®Sampling Spherical Luminaries¡¯ in ¡°Monte Carlo Techniques for Direct Lighting Calculations,¡± ACM Transactions on Graphics, 1996
-	s = frand();
-	t = frand();
 	p.x() = Centre.x() + 2 * Radius * cos(2 * PI * t) * sqrt(s * (1 - s));
 	p.y() = Centre.y() + 2 * Radius * sin(2 * PI * t) * sqrt(s * (1 - s));
 	p.z() = Centre.z() + Radius * (1 - 2 * s);
@@ -144,7 +142,16 @@ Colour phongBRDF::brdf(
 	// A parameter s is the random variable in the range between 0 and 1. 
 	// We use s in order to determine which term is employed from diffuse and specular BRDF.
 
-	return m_kd / (float)PI;
+	Colour diffuse_brdf = m_kd / (float)PI;
+
+	Vector v = in.invert();
+	Vector l = out;
+	Vector n = Nx;
+	Vector r = n * 2.0f * (l ^ n) + l.invert();
+	Colour specular_brdf = m_ks * ((m_k + 2) / (2 * PI)) * pow(v ^ r, m_k);
+
+	return diffuse_brdf * (1 - s) + specular_brdf * s;
+	// return diffuse_brdf + specular_brdf;
 }
 
 
@@ -271,6 +278,9 @@ Colour LitScene::tracePath(const Ray& ray, GObject* object, Colour weightIn, int
 		int count = 0;
 		while (probability <= 0 && count < 100) {
 			areaLight->sample(syp, probability, ixp, Lamda1, Lamda2);
+
+			Lamda1 = frand();
+			Lamda2 = frand();
 			++count;
 		}
 
@@ -285,7 +295,7 @@ Colour LitScene::tracePath(const Ray& ray, GObject* object, Colour weightIn, int
 			{
 				float cos_x_phi = normal ^ xyRayDir;
 				float cos_y_nphi = yNormal ^ xyRayDir.invert();
-				float r_sq = (ixp - syp).squarednorm();  // syp? iyp?
+				float r_sq = (ixp - syp).squarednorm();
 				float geo_term = cos_x_phi * cos_y_nphi / r_sq;
 
 				colorAdd = colorAdd +
