@@ -109,9 +109,12 @@ bool Sphere::sample(Point& p, float& probability, const Point& from, float s, fl
 	// s and t are the coefficients for sampling. probability is the pdf for the p. 
 	// from is the intersection point of a ray with an intersection object. 
 	// *Reference: Section 3.2 ¡®Sampling Spherical Luminaries¡¯ in ¡°Monte Carlo Techniques for Direct Lighting Calculations,¡± ACM Transactions on Graphics, 1996
-	p.x() = Centre.x() + 2 * Radius * cos(2 * PI * t) * sqrt(s * (1 - s));
+	/*p.x() = Centre.x() + 2 * Radius * cos(2 * PI * t) * sqrt(s * (1 - s));
 	p.y() = Centre.y() + 2 * Radius * sin(2 * PI * t) * sqrt(s * (1 - s));
-	p.z() = Centre.z() + Radius * (1 - 2 * s);
+	p.z() = Centre.z() + Radius * (1 - 2 * s);*/
+	p.x() = Centre.x() + 2 * Radius * cos(2 * PI * t) * sqrt(s * (1 - s));
+	p.y() = Centre.y() + Radius * (1 - 2 * s);
+	p.z() = Centre.z() + 2 * Radius * sin(2 * PI * t) * sqrt(s * (1 - s));
 
 	float numer = (from - p).normalised() ^ (p - Centre).normalised();
 	float denom = 2 * PI * (from - p).squarednorm() *
@@ -144,14 +147,13 @@ Colour phongBRDF::brdf(
 
 	Colour diffuse_brdf = m_kd / (float)PI;
 
-	Vector v = in.invert();
-	Vector l = out;
+	Vector v = out;
+	Vector l = in.invert();
 	Vector n = Nx;
 	Vector r = n * 2.0f * (l ^ n) + l.invert();
 	Colour specular_brdf = m_ks * ((m_k + 2) / (2 * PI)) * pow(v ^ r, m_k);
 
 	return diffuse_brdf * (1 - s) + specular_brdf * s;
-	// return diffuse_brdf + specular_brdf;
 }
 
 
@@ -184,9 +186,9 @@ Ray phongBRDF::reflection(	  const Ray& incoming,	// incoming ray
         //Diffuse part
         //==================================================
 
-        D.x=cos(2.0f*(float)PI*s2)*sqrt(1-t);
+        D.x=cos(2.0f*(float)PI*s)*sqrt(1-t);
         D.y=sqrt(t);
-        D.z=sin(2.0f*(float)PI*s2)*sqrt(1-t);
+        D.z=sin(2.0f*(float)PI*s)*sqrt(1-t);
 
         N.x=normal.x();
         N.y=normal.y();
@@ -204,7 +206,8 @@ Ray phongBRDF::reflection(	  const Ray& incoming,	// incoming ray
         r.direction().y()=D.y;
         r.direction().z()=D.z;
 
-        pdf = ( r.direction().normalised() ^ normal) / (float)PI;
+        // pdf = ( r.direction().normalised() ^ normal) / (float)PI;
+		pdf = sqrt(t) / PI;
         return r;
     }
     else if( s2 >= pd && s2 < pd + ps )
@@ -213,7 +216,32 @@ Ray phongBRDF::reflection(	  const Ray& incoming,	// incoming ray
         //==================================================
         //TASK5
         //Specular part
+		Vector iv = incoming.direction().invert().normalised();
+		Vector n = normal;
+		Vector rd = n * (iv ^ n) * 2.0f + iv.invert();
 
+		float sqrt_term = sqrt(1 - pow(t, 2.0 / (m_k + 1)));
+		D.x = sqrt_term * cos(2.0f * PI * s);
+		D.y = pow(t, 1.0 / (m_k + 1));
+		D.z = sqrt_term * sin(2.0f * PI * s);
+
+		N.x = rd.x();
+		N.y = rd.y();
+		N.z = rd.z();
+
+		// the vector is given in a right-handed orthonormal basis [U,normal,V], form that basis
+		U = N.orthogonal();
+		V = U % N;
+
+		// now form a matrix that transforms the local coordinates to world coordinates
+		local2WC.local2WCxForm(U, N, V);
+		D = D * local2WC;
+		r.direction().x() = D.x;
+		r.direction().y() = D.y;
+		r.direction().z() = D.z;
+
+		pdf = ((m_k + 1) / (2 * PI)) * pow(t, m_k / (m_k + 1));
+		return r;
     }
 
     pdf = 0;
@@ -268,6 +296,7 @@ Colour LitScene::tracePath(const Ray& ray, GObject* object, Colour weightIn, int
 	// Direct illumination
 
 	Colour colorAdd(0, 0, 0);
+	Vector rayDir = ray.direction().normalised();
 
 	for (int i = 0; i < numberOfAreaLights(); ++i) 
 	{
@@ -300,7 +329,7 @@ Colour LitScene::tracePath(const Ray& ray, GObject* object, Colour weightIn, int
 
 				colorAdd = colorAdd +
 					areaLight->material().emission() *
-					hitObject->brdf()->brdf(ixp, ray.direction().normalised(), xyRayDir, normal, Lamda1) *
+					hitObject->brdf()->brdf(ixp, xyRayDir.invert(), rayDir.invert(), normal, Lamda1) *
 					geo_term /
 					probability;
 			}
@@ -312,6 +341,17 @@ Colour LitScene::tracePath(const Ray& ray, GObject* object, Colour weightIn, int
     //==================================================
     //Task6, Task7, Task8
     //==================================================
+	float indirectPdf;
+	Ray reflRay = hitObject->brdf()->reflection(ray, normal, ixp, Lamda1, Lamda2, indirectPdf);
+	if (indirectPdf > 0)
+	{
+		Vector reflRayDir = reflRay.direction().normalised();
+		colorAdd = colorAdd +
+			tracePath(reflRay, hitObject, weightIn, depth + 1) *
+			hitObject->brdf()->brdf(ixp, reflRayDir.invert(), rayDir.invert(), normal, Lamda1) *
+			(reflRayDir ^ normal) /
+			indirectPdf;
+	}
 
     colourOut = colourOut + colorAdd;
     return colourOut;
