@@ -5,7 +5,7 @@
 #include "debug.h"
 
 // Maximum number of times a ray bounces. If set to 1 you will only get local illumination.
-#define MAX_PATH_BOUNCES 5
+#define MAX_PATH_BOUNCES 20
 
 #include <GL/glut.h>
 #include <GMmatlib.h>

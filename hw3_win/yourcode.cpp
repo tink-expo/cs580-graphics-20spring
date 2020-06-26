@@ -273,7 +273,7 @@ Colour LitScene::tracePath(const Ray& ray, GObject* object, Colour weightIn, int
     // ----------------------------
     // intersect ray with scene
     // ----------------------------
-    GObject* hitObject = intersect(ray,ixp,normal);
+	GObject* hitObject = intersect(ray, ixp, normal);
 
     if (!hitObject ) return colourOut;
 
@@ -328,10 +328,10 @@ Colour LitScene::tracePath(const Ray& ray, GObject* object, Colour weightIn, int
 				float geo_term = cos_x_phi * cos_y_nphi / r_sq;
 
 				colorAdd = colorAdd +
-					areaLight->material().emission() *
-					hitObject->brdf()->brdf(ixp, xyRayDir.invert(), rayDir.invert(), normal, Lamda1) *
-					geo_term /
-					probability;
+					areaLight->material().emission()
+					* hitObject->brdf()->brdf(ixp, xyRayDir.invert(), rayDir.invert(), normal, Lamda1)
+					* geo_term
+					/ probability;
 			}
 		}
 	}
@@ -346,11 +346,26 @@ Colour LitScene::tracePath(const Ray& ray, GObject* object, Colour weightIn, int
 	if (indirectPdf > 0)
 	{
 		Vector reflRayDir = reflRay.direction().normalised();
-		colorAdd = colorAdd +
-			tracePath(reflRay, hitObject, weightIn, depth + 1) *
-			hitObject->brdf()->brdf(ixp, reflRayDir.invert(), rayDir.invert(), normal, Lamda1) *
-			(reflRayDir ^ normal) /
-			indirectPdf;
+		Colour reflBrdf =
+			hitObject->brdf()->brdf(ixp, reflRayDir.invert(), rayDir.invert(), normal, Lamda1)
+			* (reflRayDir ^ normal);
+		float rr_p = max(reflBrdf.red(), max(reflBrdf.green(), reflBrdf.blue()));
+
+		if (rr_p)
+		{
+			if (depth < 4)
+			{
+				colorAdd = colorAdd
+					+ tracePath(reflRay, NULL, weightIn, depth + 1)
+					* (reflBrdf / 1) / indirectPdf;
+			}
+			else if (rr_p >= Lamda1)
+			{
+				colorAdd = colorAdd
+					+ tracePath(reflRay, NULL, weightIn, depth + 1)
+					* (reflBrdf / rr_p) / indirectPdf;
+			}
+		}
 	}
 
     colourOut = colourOut + colorAdd;
