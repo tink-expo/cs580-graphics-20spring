@@ -9,6 +9,75 @@
 #include <math.h>
 #include <float.h>
 
+namespace
+{
+
+bool getRefractDir(Vector& psiDir, Vector& n1Normal, float n1, float n2, Vector& tDir)
+{
+	float cos1 = psiDir ^ n1Normal;
+	if (sqrt(1 - cos1 * cos1) >= n2 / n1)
+	{
+		return false;
+	}
+
+	float n1n2Ratio = n1 / n2;
+	tDir = psiDir * (-n1n2Ratio)
+		+ n1Normal * (n1n2Ratio * cos1 - sqrt(1 - n1n2Ratio * n1n2Ratio * (1 - cos1 * cos1)));
+	tDir.normalise();
+	return true;
+}
+
+bool sphereIntersectFurther(Sphere* sphere, const Ray& ray, float& t)
+{
+	float a, b, c, r;
+	float dx, dy, dz;
+	float A, B, C, d;
+	float x1, y1, z1, x2, y2, z2;
+	float t1, t2;
+
+	/*get the centre*/
+	a = sphere->centre().x();
+	b = sphere->centre().y();
+	c = sphere->centre().z();
+	r = sphere->radius();
+
+	/*coordinates of the ray*/
+	x1 = ray.origin().x();
+	y1 = ray.origin().y();
+	z1 = ray.origin().z();
+
+	/*coordinates at the other end*/
+	x2 = x1 + ray.direction().x();
+	y2 = y1 + ray.direction().y();
+	z2 = z1 + ray.direction().z();
+
+	/*translate to the origin*/
+	x1 = x1 - a; y1 = y1 - b; z1 = z1 - c;
+	x2 = x2 - a; y2 = y2 - b; z2 = z2 - c;
+
+	/*set up and solve the quadratic equation*/
+	dx = x2 - x1;
+	dy = y2 - y1;
+	dz = z2 - z1;
+
+	A = dx * dx + dy * dy + dz * dz;
+	B = x1 * dx + y1 * dy + z1 * dz;
+	C = x1 * x1 + y1 * y1 + z1 * z1 - r * r;
+
+	/*there is no intersection if this happens*/
+	if ((d = (B*B - A * C)) < 0.0) return false;
+
+	d = (float)sqrt((double)d);
+	t1 = (-B - d) / A;
+	t2 = (-B + d) / A;
+
+	/*want the smallest of these*/
+	t = t2;
+
+	return true;
+}
+
+}  // namespace
 
 Ray SimpleCamera::StratifiedRandomRay(int i, int j, int k, int l, double offset)
 {
@@ -342,28 +411,51 @@ Colour LitScene::tracePath(const Ray& ray, GObject* object, Colour weightIn, int
     //Task6, Task7, Task8
     //==================================================
 	float indirectPdf;
-	Ray reflRay = hitObject->brdf()->reflection(ray, normal, ixp, Lamda1, Lamda2, indirectPdf);
+	Ray reflectRay = hitObject->brdf()->reflection(ray, normal, ixp, Lamda1, Lamda2, indirectPdf);
 	if (indirectPdf > 0)
 	{
-		Vector reflRayDir = reflRay.direction().normalised();
-		Colour reflBrdf =
-			hitObject->brdf()->brdf(ixp, reflRayDir.invert(), rayDir.invert(), normal, Lamda1)
-			* (reflRayDir ^ normal);
-		float rr_p = max(reflBrdf.red(), max(reflBrdf.green(), reflBrdf.blue()));
+		Vector reflectRayDir = reflectRay.direction().normalised();
+		Colour reflectReflectance =
+			hitObject->brdf()->brdf(ixp, reflectRayDir.invert(), rayDir.invert(), normal, Lamda1)
+			* (reflectRayDir ^ normal);
+		float rr_p = max(reflectReflectance.red(), max(reflectReflectance.green(), reflectReflectance.blue()));
 
 		if (rr_p)
 		{
 			if (depth < 4)
 			{
 				colorAdd = colorAdd
-					+ tracePath(reflRay, NULL, weightIn, depth + 1)
-					* (reflBrdf / 1) / indirectPdf;
+					+ tracePath(reflectRay, NULL, weightIn, depth + 1)
+					* reflectReflectance / indirectPdf;
 			}
 			else if (rr_p >= Lamda1)
 			{
 				colorAdd = colorAdd
-					+ tracePath(reflRay, NULL, weightIn, depth + 1)
-					* (reflBrdf / rr_p) / indirectPdf;
+					+ tracePath(reflectRay, NULL, weightIn, depth + 1)
+					* (reflectReflectance / rr_p) / indirectPdf;
+			}
+		}
+	}
+
+	if (hitObject->isRefractive())
+	{
+		Sphere* hitSphere = (Sphere*)hitObject;
+		
+		float n2 = hitSphere->getRfrIndex();
+		Vector n2Dir;
+		if (getRefractDir(rayDir.invert(), normal, 1.0f, n2, n2Dir))
+		{
+			float n2t;
+			if (sphereIntersectFurther(hitSphere, Ray(ixp, n2Dir), n2t))
+			{
+				Point n2xp = ixp + n2Dir * n2t;
+				Vector n2Normal = (hitSphere->normal(n2xp)).invert();
+				Vector n1Dir;
+				if (getRefractDir(n2Dir.invert(), n2Normal, n2, 1.0f, n1Dir))
+				{
+					colorAdd = colorAdd
+						+ tracePath(Ray(n2xp, n1Dir), NULL, weightIn, depth + 1);
+				}
 			}
 		}
 	}
