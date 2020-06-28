@@ -352,12 +352,9 @@ Colour LitScene::tracePath(const Ray& ray, GObject* object, Colour weightIn, int
         // ray struck an emitter - return emission.
         // you could possibly argue that there should be a slight chance that a ray is scattered 
         // off an emitter depending on its brdf - this is however usually ignored.
-		if (object == NULL)
-		{
-			float ndotl = normal ^ ray.direction().invert().normalised();
-			if (ndotl > 0.0f)
-				colourOut = hitObject->material().emission();
-		}
+		float ndotl = normal ^ ray.direction().invert().normalised();
+		if (ndotl > 0.0f)
+			colourOut = hitObject->material().emission();
         return colourOut;
     }
 
@@ -416,7 +413,7 @@ Colour LitScene::tracePath(const Ray& ray, GObject* object, Colour weightIn, int
     //==================================================
 	float indirectPdf;
 	Ray reflectRay = hitObject->brdf()->reflection(ray, normal, ixp, Lamda1, Lamda2, indirectPdf);
-	if (indirectPdf > 0)
+	if (indirectPdf > 0 && !hitLight(hitObject, reflectRay))
 	{
 		Vector reflectRayDir = reflectRay.direction().normalised();
 		Colour reflectReflectance =
@@ -428,13 +425,13 @@ Colour LitScene::tracePath(const Ray& ray, GObject* object, Colour weightIn, int
 			if (depth < 3)
 			{
 				colorAdd = colorAdd
-					+ tracePath(reflectRay, hitObject, weightIn, depth + 1)
+					+ tracePath(reflectRay, NULL, weightIn, depth + 1)
 					* reflectReflectance / indirectPdf;
 			}
 			else if (rr_p >= Lamda1)
 			{
 				colorAdd = colorAdd
-					+ tracePath(reflectRay, hitObject, weightIn, depth + 1)
+					+ tracePath(reflectRay, NULL, weightIn, depth + 1)
 					* (reflectReflectance / rr_p) / indirectPdf;
 			}
 		}
