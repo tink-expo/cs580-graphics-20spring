@@ -12,6 +12,11 @@
 namespace
 {
 
+inline float clamp(float colourE)
+{
+	return max(0, min(1, colourE));
+}
+
 bool getRefractDir(Vector& psiDir, Vector& n1Normal, float n1, float n2, Vector& tDir)
 {
 	float cos1 = psiDir ^ n1Normal;
@@ -71,7 +76,6 @@ bool sphereIntersectFurther(Sphere* sphere, const Ray& ray, float& t)
 	t1 = (-B - d) / A;
 	t2 = (-B + d) / A;
 
-	/*want the smallest of these*/
 	t = t2;
 
 	return true;
@@ -178,9 +182,6 @@ bool Sphere::sample(Point& p, float& probability, const Point& from, float s, fl
 	// s and t are the coefficients for sampling. probability is the pdf for the p. 
 	// from is the intersection point of a ray with an intersection object. 
 	// *Reference: Section 3.2 ¡®Sampling Spherical Luminaries¡¯ in ¡°Monte Carlo Techniques for Direct Lighting Calculations,¡± ACM Transactions on Graphics, 1996
-	/*p.x() = Centre.x() + 2 * Radius * cos(2 * PI * t) * sqrt(s * (1 - s));
-	p.y() = Centre.y() + 2 * Radius * sin(2 * PI * t) * sqrt(s * (1 - s));
-	p.z() = Centre.z() + Radius * (1 - 2 * s);*/
 	p.x() = Centre.x() + 2 * Radius * cos(2 * PI * t) * sqrt(s * (1 - s));
 	p.y() = Centre.y() + Radius * (1 - 2 * s);
 	p.z() = Centre.z() + 2 * Radius * sin(2 * PI * t) * sqrt(s * (1 - s));
@@ -351,9 +352,12 @@ Colour LitScene::tracePath(const Ray& ray, GObject* object, Colour weightIn, int
         // ray struck an emitter - return emission.
         // you could possibly argue that there should be a slight chance that a ray is scattered 
         // off an emitter depending on its brdf - this is however usually ignored.
-        float ndotl = normal ^ ray.direction().invert().normalised();
-        if (ndotl > 0.0f)
-            colourOut = hitObject->material().emission();
+		if (object == NULL)
+		{
+			float ndotl = normal ^ ray.direction().invert().normalised();
+			if (ndotl > 0.0f)
+				colourOut = hitObject->material().emission();
+		}
         return colourOut;
     }
 
@@ -366,7 +370,7 @@ Colour LitScene::tracePath(const Ray& ray, GObject* object, Colour weightIn, int
 
 	Colour colorAdd(0, 0, 0);
 	Vector rayDir = ray.direction().normalised();
-
+	
 	for (int i = 0; i < numberOfAreaLights(); ++i) 
 	{
 		GObject* areaLight = areaLightAt(i);
@@ -404,7 +408,7 @@ Colour LitScene::tracePath(const Ray& ray, GObject* object, Colour weightIn, int
 			}
 		}
 	}
-
+	
     // Indirect illumination
     // [CS580 GLOBAL ILLUMINATION] YOUR CODE HERE
     //==================================================
@@ -419,19 +423,18 @@ Colour LitScene::tracePath(const Ray& ray, GObject* object, Colour weightIn, int
 			hitObject->brdf()->brdf(ixp, reflectRayDir.invert(), rayDir.invert(), normal, Lamda1)
 			* (reflectRayDir ^ normal);
 		float rr_p = max(reflectReflectance.red(), max(reflectReflectance.green(), reflectReflectance.blue()));
-
 		if (rr_p)
 		{
-			if (depth < 4)
+			if (depth < 3)
 			{
 				colorAdd = colorAdd
-					+ tracePath(reflectRay, NULL, weightIn, depth + 1)
+					+ tracePath(reflectRay, hitObject, weightIn, depth + 1)
 					* reflectReflectance / indirectPdf;
 			}
 			else if (rr_p >= Lamda1)
 			{
 				colorAdd = colorAdd
-					+ tracePath(reflectRay, NULL, weightIn, depth + 1)
+					+ tracePath(reflectRay, hitObject, weightIn, depth + 1)
 					* (reflectReflectance / rr_p) / indirectPdf;
 			}
 		}
@@ -461,6 +464,9 @@ Colour LitScene::tracePath(const Ray& ray, GObject* object, Colour weightIn, int
 	}
 
     colourOut = colourOut + colorAdd;
+	colourOut.red() = clamp(colourOut.red());
+	colourOut.green() = clamp(colourOut.green());
+	colourOut.blue() = clamp(colourOut.blue());
     return colourOut;
 }
 
