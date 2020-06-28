@@ -14,28 +14,27 @@
 #include "simplecamera.h"
 #include "brdf.h"
 #include "sphere.h"
-#include "direct.h"
 
 // Debugging Info ---
-const char* friendlyTime(char time[9],double tsecs);
+const char* friendlyTime(char time[9], double tsecs);
 // ------------------
 
-const int xSZ=250;	// Image X-resolution
-const int ySZ=250;	// Image Y-resolution
-const int previewStep=10;
+const int xSZ = 250;	// Image X-resolution
+const int ySZ = 250;	// Image Y-resolution
+const int previewStep = 10;
 LitScene TheScene(MAX_PATH_BOUNCES);
-SimpleCamera TheCamera(xSZ,ySZ);
-int Nx,Ny;				// set resolution
-GLfloat* raytraceBuffer=NULL;
+SimpleCamera TheCamera(xSZ, ySZ);
+int Nx, Ny;				// set resolution
+GLfloat* raytraceBuffer = NULL;
 static char filename[256];
 
 // this adjust the number of rays sent per pixel
-static const int N_RAYS_PER_PIXEL=64; // 64
+static const int N_RAYS_PER_PIXEL = 64; // 64
 
 // use this to scale the image radiance for display, if you get a dark image try adjusting this
-static float DISPLAY_SCALE=30.0f;
+static float DISPLAY_SCALE = 30.0f;
 
-void keyboard(unsigned char key,int x,int y);
+void keyboard(unsigned char key, int x, int y);
 void glutResize(int w, int h);
 void set_pixel(int x, int y, Colour col)
 {
@@ -47,24 +46,24 @@ void set_pixel(int x, int y, Colour col)
 
 static char title[256];
 static char timeS[9];
-static int irt=0, jrt=0;
-static bool done=false;
+static int irt = 0, jrt = 0;
+static bool done = false;
 static Colour col;
 static time_t start;
-static double estimate_dur=0.0;
-static double dur=0.0;
+static double estimate_dur = 0.0;
+static double dur = 0.0;
 
 
 void screenshot(int windowWidth, int windowHeight, char* filename)
 {
-	int imageSize = windowWidth*windowHeight*4;
+	int imageSize = windowWidth * windowHeight * 4;
 	char*  bmpBuffer = (char*)malloc(imageSize);
-	if  (!bmpBuffer)
+	if (!bmpBuffer)
 		return;
 
-	glReadPixels((GLint)0, (GLint)0,(GLint)windowWidth, (GLint)windowHeight, GL_RGBA, GL_UNSIGNED_BYTE, bmpBuffer );
+	glReadPixels((GLint)0, (GLint)0, (GLint)windowWidth, (GLint)windowHeight, GL_RGBA, GL_UNSIGNED_BYTE, bmpBuffer);
 
-	FILE *filePtr = fopen( filename, "wb" );
+	FILE *filePtr = fopen(filename, "wb");
 	if (!filePtr)
 		return;
 
@@ -75,33 +74,33 @@ void screenshot(int windowWidth, int windowHeight, char* filename)
 	bitmapFileHeader.bfSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + imageSize;
 	bitmapFileHeader.bfReserved1 = 0;
 	bitmapFileHeader.bfReserved2 = 0;
-	bitmapFileHeader.bfOffBits = sizeof(BITMAPFILEHEADER) +  sizeof(BITMAPINFOHEADER);
+	bitmapFileHeader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
 
 	bitmapInfoHeader.biSize = sizeof(BITMAPINFOHEADER);
 	bitmapInfoHeader.biWidth = windowWidth;
 	bitmapInfoHeader.biHeight = windowHeight;
 	bitmapInfoHeader.biPlanes = 1;
-	bitmapInfoHeader.biBitCount  = 32;
+	bitmapInfoHeader.biBitCount = 32;
 	bitmapInfoHeader.biCompression = 0; //BI_RGB;
 	bitmapInfoHeader.biSizeImage = imageSize;
 	bitmapInfoHeader.biXPelsPerMeter = 0; // ?
 	bitmapInfoHeader.biYPelsPerMeter = 0; //  ?
 	bitmapInfoHeader.biClrUsed = 0;
-	bitmapInfoHeader.biClrImportant =  0;
+	bitmapInfoHeader.biClrImportant = 0;
 
-	fwrite( &bitmapFileHeader, 1, sizeof(BITMAPFILEHEADER), filePtr );
-	fwrite( &bitmapInfoHeader, 1, sizeof(BITMAPINFOHEADER), filePtr );
+	fwrite(&bitmapFileHeader, 1, sizeof(BITMAPFILEHEADER), filePtr);
+	fwrite(&bitmapInfoHeader, 1, sizeof(BITMAPINFOHEADER), filePtr);
 
 	// Switch Red and Blue channels as source is RGB not BGR
 	BYTE tmp;
-	for ( int i = 0; i < imageSize; i+=4 ) 
+	for (int i = 0; i < imageSize; i += 4)
 	{
 		tmp = bmpBuffer[i];
-		bmpBuffer[i] = bmpBuffer[i+2];
-		bmpBuffer[i+2] = tmp;
+		bmpBuffer[i] = bmpBuffer[i + 2];
+		bmpBuffer[i + 2] = tmp;
 	}
 
-	fwrite( bmpBuffer, 1, imageSize, filePtr );
+	fwrite(bmpBuffer, 1, imageSize, filePtr);
 
 	fclose(filePtr);
 
@@ -115,29 +114,29 @@ void idle(void)
 	// compute image
 	Colour col, avg_col, sum_col;
 	Ray ray;
-	for (int i=0; i<Nx; i++)
+	for (int i = 0; i < Nx; i++)
 	{
 		// get colour for this pixel
-		avg_col=TheScene.renderPixel(i,Ny-jrt-1,TheCamera,N_RAYS_PER_PIXEL)* DISPLAY_SCALE;
+		avg_col = TheScene.renderPixel(i, Ny - jrt - 1, TheCamera, N_RAYS_PER_PIXEL)* DISPLAY_SCALE;
 
-    float gamma = 0.45454f;
+		float gamma = 0.45454f;
 
-    // set colour in buffer and on screen
-    raytraceBuffer[((Ny-jrt-1)*Nx+i)*3]  =pow(avg_col.red(),gamma);
-    raytraceBuffer[((Ny-jrt-1)*Nx+i)*3+1]=pow(avg_col.green(),gamma);
-    raytraceBuffer[((Ny-jrt-1)*Nx+i)*3+2]=pow(avg_col.blue(),gamma);
+		// set colour in buffer and on screen
+		raytraceBuffer[((Ny - jrt - 1)*Nx + i) * 3] = pow(avg_col.red(), gamma);
+		raytraceBuffer[((Ny - jrt - 1)*Nx + i) * 3 + 1] = pow(avg_col.green(), gamma);
+		raytraceBuffer[((Ny - jrt - 1)*Nx + i) * 3 + 2] = pow(avg_col.blue(), gamma);
 		//set_pixel(i,(Ny-jrt-1),avg_col);
 	}
 
 	jrt++;	// next row
 
 	// check if we have finished tracing all rows
-	if (jrt==Ny)
+	if (jrt == Ny)
 	{
-		time_t now=clock();
-		dur=(double)(now-start)/CLOCKS_PER_SEC;
-		friendlyTime(timeS,dur);
-		done=true;
+		time_t now = clock();
+		dur = (double)(now - start) / CLOCKS_PER_SEC;
+		friendlyTime(timeS, dur);
+		done = true;
 		std::cout << "Done raytracing frame!" << std::endl;
 	}
 
@@ -147,42 +146,42 @@ void idle(void)
 void display(void)
 {
 	if (done)
-		sprintf(title,"PT done in %s",timeS);
+		sprintf(title, "PT done in %s", timeS);
 	else
 	{
-		if (jrt==0)
-			start=clock();
+		if (jrt == 0)
+			start = clock();
 		else
 		{
-			time_t now=clock();
-			dur=(double)(now-start)/CLOCKS_PER_SEC;
-			estimate_dur=dur/((double)jrt/Ny);
+			time_t now = clock();
+			dur = (double)(now - start) / CLOCKS_PER_SEC;
+			estimate_dur = dur / ((double)jrt / Ny);
 		}
 		char time1[9];
 		char time2[9];
-		sprintf(title,"%.1f%%, time (%s / %s)",100.0f*((float)jrt/Ny),friendlyTime(time1,dur),friendlyTime(time2,estimate_dur)); 
+		sprintf(title, "%.1f%%, time (%s / %s)", 100.0f*((float)jrt / Ny), friendlyTime(time1, dur), friendlyTime(time2, estimate_dur));
 	}
 
 	glClear(GL_DEPTH_BUFFER_BIT);
-	glRasterPos2i(0,0);
+	glRasterPos2i(0, 0);
 	glutSetIconTitle(title);
 	glutSetWindowTitle(title);
-	glDrawPixels(Nx,Ny,GL_RGB,GL_FLOAT,raytraceBuffer);	// set pixels from buffer to screen
+	glDrawPixels(Nx, Ny, GL_RGB, GL_FLOAT, raytraceBuffer);	// set pixels from buffer to screen
 	glFlush();
 
-	//if( done )
-	//{
-	//	// output frame buffer to image
-	//	char output[64];
-	//	sprintf( output, "armacw1%ld.bmp", time( NULL ) );
-	//	screenshot( xSZ, ySZ, output );
-	//}
+	if (done)
+	{
+		// output frame buffer to image
+		char output[64];
+		sprintf(output, "armacw1%ld.bmp", time(NULL));
+		screenshot(xSZ, ySZ, output);
+	}
 }
 
 void glutResize(int w, int h)
 {
-	if (w!=Nx || h!=Ny) glutReshapeWindow(Nx,Ny);	// if resized, snap back to original size/shape
-	glutPostRedisplay ();
+	if (w != Nx || h != Ny) glutReshapeWindow(Nx, Ny);	// if resized, snap back to original size/shape
+	glutPostRedisplay();
 }
 
 void create_window(void)
@@ -191,32 +190,32 @@ void create_window(void)
 	Ny = TheCamera.yResolution();
 
 	// create a window with the desired size and title
-	glutInitWindowSize(Nx,Ny);
+	glutInitWindowSize(Nx, Ny);
 	glutCreateWindow("Path tracer");
 
-	raytraceBuffer=new GLfloat[Nx*Ny*3];	// allocate space for buffer to hold colour data
-	if (raytraceBuffer==NULL) exit(1);
+	raytraceBuffer = new GLfloat[Nx*Ny * 3];	// allocate space for buffer to hold colour data
+	if (raytraceBuffer == NULL) exit(1);
 
 	// fill ray-trace buffer with random junk
-	for (int y=0;y<Ny;y++)
-		for (int x=0;x<Nx;x++)
+	for (int y = 0; y < Ny; y++)
+		for (int x = 0; x < Nx; x++)
 		{
-			raytraceBuffer[(y*Nx+x)*3]  =frand();
-			raytraceBuffer[(y*Nx+x)*3+1]=frand();
-			raytraceBuffer[(y*Nx+x)*3+2]=frand();
+			raytraceBuffer[(y*Nx + x) * 3] = frand();
+			raytraceBuffer[(y*Nx + x) * 3 + 1] = frand();
+			raytraceBuffer[(y*Nx + x) * 3 + 2] = frand();
 		}
 
-		// specify the function to be used for rendering in this window
-		glutDisplayFunc(display);
-		glutIdleFunc(idle);
-		glutKeyboardFunc(keyboard);
-		glutReshapeFunc(glutResize);
+	// specify the function to be used for rendering in this window
+	glutDisplayFunc(display);
+	glutIdleFunc(idle);
+	glutKeyboardFunc(keyboard);
+	glutReshapeFunc(glutResize);
 
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
 
-		gluOrtho2D(0.0,(double)Nx-1,0.0,(double)Ny-1);
-		glViewport(0,0,Nx,Ny);
+	gluOrtho2D(0.0, (double)Nx - 1, 0.0, (double)Ny - 1);
+	glViewport(0, 0, Nx, Ny);
 }
 
 void usage(void)
@@ -233,23 +232,18 @@ int main(int argc, char **argv)
 	glutInit(&argc, argv);
 
 	// set up the camera - don't change these unless you understand what the parameters do
-	TheCamera.setResolution(xSZ,ySZ);
-	TheCamera.setVPWindow(-2.0f,2.0f,-2.0f,2.0f);
-	TheCamera.zcop() =(2.0f+6.0f);
+	TheCamera.setResolution(xSZ, ySZ);
+	TheCamera.setVPWindow(-2.0f, 2.0f, -2.0f, 2.0f);
+	TheCamera.zcop() = (2.0f + 6.0f);
 
-	char* arg_filename;
-
-	if (argc<2) 
+	if (argc < 2)
 	{
-		arg_filename = "../data/data.dat";
+		usage();
+		return 1;
 	}
-	else 
-	{
-		arg_filename = argv[1];
-	}
-	if (!TheScene.load(arg_filename)) return 1;
+	if (!TheScene.load(argv[1])) return 1;
 
-	strcpy(filename, arg_filename);
+	strcpy(filename, argv[1]);
 
 	// open a window of the specified size
 	create_window();
@@ -259,18 +253,18 @@ int main(int argc, char **argv)
 };
 
 
-void keyboard(unsigned char key,int x,int y)
+void keyboard(unsigned char key, int x, int y)
 {
 	// nothing
 }
 
-const char* friendlyTime(char time[9],double tsecs)
+const char* friendlyTime(char time[9], double tsecs)
 {
-	double rems=tsecs;
-	int hrs=0,mins=0,secs=0;
-	hrs=(int)(rems/3600.0);rems=rems-hrs*3600;
-	mins=(int)(rems/60.0);rems=rems-mins*60;
-	secs=(int)rems;
-	sprintf(time,"%02d:%02d:%02d",hrs,mins,secs);
+	double rems = tsecs;
+	int hrs = 0, mins = 0, secs = 0;
+	hrs = (int)(rems / 3600.0); rems = rems - hrs * 3600;
+	mins = (int)(rems / 60.0); rems = rems - mins * 60;
+	secs = (int)rems;
+	sprintf(time, "%02d:%02d:%02d", hrs, mins, secs);
 	return time;
 }
