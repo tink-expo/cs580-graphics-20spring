@@ -14,6 +14,7 @@
 #include "simplecamera.h"
 #include "brdf.h"
 #include "sphere.h"
+#include "direct.h"
 
 // Debugging Info ---
 const char* friendlyTime(char time[9], double tsecs);
@@ -169,13 +170,13 @@ void display(void)
 	glDrawPixels(Nx, Ny, GL_RGB, GL_FLOAT, raytraceBuffer);	// set pixels from buffer to screen
 	glFlush();
 
-	if (done)
-	{
-		// output frame buffer to image
-		char output[64];
-		sprintf(output, "armacw1%ld.bmp", time(NULL));
-		screenshot(xSZ, ySZ, output);
-	}
+	//if( done )
+	//{
+	//	// output frame buffer to image
+	//	char output[64];
+	//	sprintf( output, "armacw1%ld.bmp", time( NULL ) );
+	//	screenshot( xSZ, ySZ, output );
+	//}
 }
 
 void glutResize(int w, int h)
@@ -236,14 +237,19 @@ int main(int argc, char **argv)
 	TheCamera.setVPWindow(-2.0f, 2.0f, -2.0f, 2.0f);
 	TheCamera.zcop() = (2.0f + 6.0f);
 
+	char* arg_filename;
+
 	if (argc < 2)
 	{
-		usage();
-		return 1;
+		arg_filename = "../data/data.dat";
 	}
-	if (!TheScene.load(argv[1])) return 1;
+	else
+	{
+		arg_filename = argv[1];
+	}
+	if (!TheScene.load(arg_filename)) return 1;
 
-	strcpy(filename, argv[1]);
+	strcpy(filename, arg_filename);
 
 	// open a window of the specified size
 	create_window();
