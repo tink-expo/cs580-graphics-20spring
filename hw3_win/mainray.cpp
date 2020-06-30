@@ -224,6 +224,34 @@ void usage(void)
 	std::cout << "usage: pathtracer.exe <filename>" << std::endl;
 }
 
+bool getRefractDir(Vector& psiDir, Vector& n1Normal, float n1, float n2, Vector& tDir)
+{
+	float cos1 = psiDir ^ n1Normal;
+	if (sqrt(1 - cos1 * cos1) >= n2 / n1)
+	{
+		return false;
+	}
+
+	float n1n2Ratio = n1 / n2;
+	tDir = psiDir * (-n1n2Ratio)
+		+ n1Normal * (n1n2Ratio * cos1 - sqrt(1 - n1n2Ratio * n1n2Ratio * (1 - cos1 * cos1)));
+	tDir.normalise();
+	return true;
+}
+
+//int main()
+//{
+//	Vector psiDir(-1, sqrt(3), 0);
+//	psiDir.normalise();
+//	Vector n1Normal(0, 1, 0);
+//	Vector tDir;
+//	getRefractDir(psiDir, n1Normal, 1.0, 1.5, tDir);
+//	float cos1 = psiDir ^ n1Normal;
+//	float cos2 = tDir ^ Vector(0, -1, 0);
+//	float s1s2 = sqrt(1 - cos1 * cos1) / sqrt(1 - cos2 * cos2);
+//	std::cout << s1s2 << std::endl;
+//}
+
 /***************************************************************************/
 /* The main function */
 /***************************************************************************/

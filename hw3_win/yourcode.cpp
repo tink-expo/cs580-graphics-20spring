@@ -17,17 +17,16 @@ inline float clamp(float colourE)
 	return max(0, min(1, colourE));
 }
 
-bool getRefractDir(Vector& psiDir, Vector& n1Normal, float n1, float n2, Vector& tDir)
+bool getRefractDir(Vector& psiDir, Vector& n1Normal, float ctRatio, Vector& tDir)
 {
 	float cos1 = psiDir ^ n1Normal;
-	if (sqrt(1 - cos1 * cos1) >= n2 / n1)
+	if (sqrt(1 - cos1 * cos1) >= 1.0f / ctRatio)
 	{
 		return false;
 	}
 
-	float n1n2Ratio = n1 / n2;
-	tDir = psiDir * (-n1n2Ratio)
-		+ n1Normal * (n1n2Ratio * cos1 - sqrt(1 - n1n2Ratio * n1n2Ratio * (1 - cos1 * cos1)));
+	tDir = psiDir * (-ctRatio)
+		+ n1Normal * (ctRatio * cos1 - sqrt(1 - ctRatio * ctRatio * (1 - cos1 * cos1)));
 	tDir.normalise();
 	return true;
 }
@@ -443,19 +442,21 @@ Colour LitScene::tracePath(const Ray& ray, GObject* object, Colour weightIn, int
 		
 		float n2 = hitSphere->getRfrIndex();
 		Vector n2Dir;
-		if (getRefractDir(rayDir.invert(), normal, 1.0f, n2, n2Dir))
+		if (getRefractDir(rayDir.invert(), normal, 1.0f / n2, n2Dir))
 		{
 			float n2t;
 			if (sphereIntersectFurther(hitSphere, Ray(ixp, n2Dir), n2t))
 			{
 				Point n2xp = ixp + n2Dir * n2t;
-				Vector n2Normal = (hitSphere->normal(n2xp)).invert();
+				/*Vector n2Normal = (hitSphere->normal(n2xp)).invert();
 				Vector n1Dir;
-				if (getRefractDir(n2Dir.invert(), n2Normal, n2, 1.0f, n1Dir))
+				if (getRefractDir(n2Dir.invert(), n2Normal, n2, n1Dir))
 				{
 					colorAdd = colorAdd
 						+ tracePath(Ray(n2xp, n1Dir), NULL, weightIn, depth + 1);
-				}
+				}*/
+				colorAdd = colorAdd
+					+ tracePath(Ray(n2xp, n2Dir), NULL, weightIn, depth + 1);
 			}
 		}
 	}
