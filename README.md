@@ -17,8 +17,7 @@ $ cd raytracing
 $ mkdir build && cd build && cmake .. && make
 $ ./raytracing < CS580_cornel_box.dat
 ```
-
-![](screenshots/raytracing.png){:width="300" height="300"}
+<img src="screenshots/raytracing.png" width="40%">
 
 ### Radiosity
 ```
@@ -28,7 +27,7 @@ $ ./radiosity
 ```
 After running above commands, two windows appear. Click the smaller window, and then press 's' on the keyboard.
 
-![](screenshots/radiosity.png){:width="300" height="300"}
+![](screenshots/radiosity.png)
 
 ### Path Tracing
 In `path_tracing/projectfiles`, open `CS580_pathtracer.sln`, and build `.exe` file using Visual Studio.  
@@ -37,4 +36,4 @@ Pass `.dat` file as command line argument, like below.
 pathtracer.exe data/data.dat
 ```
 
-![](screenshots/path_tracing.png){:width="300" height="300"}
+![](screenshots/path_tracing.png)
