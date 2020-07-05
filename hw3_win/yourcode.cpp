@@ -122,6 +122,9 @@ Colour LitScene::renderPixel(int i, int j, SimpleCamera& TheCamera, int N_RAYS_P
 	Colour col(0, 0, 0);
 	for (int n = 0; n < N_RAYS_PER_PIXEL; ++n) 
 	{
+		// NOTE: I didn't use k, l, offset parameters in StratifiedRandomRay(i, j, k, l, offset).
+		// I called additional frand() twice inside the function itself.
+		// Thus here the arguments are just all zeros.
 		col = col + tracePath(TheCamera.StratifiedRandomRay(i, j, 0, 0, 0)) / (float) N_RAYS_PER_PIXEL;
 	}
 	return col;
@@ -180,7 +183,7 @@ bool Sphere::sample(Point& p, float& probability, const Point& from, float s, fl
 	// p is the sampled position of the light source. 
 	// s and t are the coefficients for sampling. probability is the pdf for the p. 
 	// from is the intersection point of a ray with an intersection object. 
-	// *Reference: Section 3.2 ¡®Sampling Spherical Luminaries¡¯ in ¡°Monte Carlo Techniques for Direct Lighting Calculations,¡± ACM Transactions on Graphics, 1996
+	// *Reference: Section 3.2 ï¿½ï¿½Sampling Spherical Luminariesï¿½ï¿½ in ï¿½ï¿½Monte Carlo Techniques for Direct Lighting Calculations,ï¿½ï¿½ ACM Transactions on Graphics, 1996
 	p.x() = Centre.x() + 2 * Radius * cos(2 * PI * t) * sqrt(s * (1 - s));
 	p.y() = Centre.y() + Radius * (1 - 2 * s);
 	p.z() = Centre.z() + 2 * Radius * sin(2 * PI * t) * sqrt(s * (1 - s));
@@ -448,15 +451,13 @@ Colour LitScene::tracePath(const Ray& ray, GObject* object, Colour weightIn, int
 			if (sphereIntersectFurther(hitSphere, Ray(ixp, n2Dir), n2t))
 			{
 				Point n2xp = ixp + n2Dir * n2t;
-				/*Vector n2Normal = (hitSphere->normal(n2xp)).invert();
+				Vector n2Normal = (hitSphere->normal(n2xp)).invert();
 				Vector n1Dir;
 				if (getRefractDir(n2Dir.invert(), n2Normal, n2, n1Dir))
 				{
 					colorAdd = colorAdd
 						+ tracePath(Ray(n2xp, n1Dir), NULL, weightIn, depth + 1);
-				}*/
-				colorAdd = colorAdd
-					+ tracePath(Ray(n2xp, n2Dir), NULL, weightIn, depth + 1);
+				}
 			}
 		}
 	}
